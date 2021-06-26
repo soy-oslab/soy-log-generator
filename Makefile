@@ -8,6 +8,9 @@ all: generator
 
 test: compressor-test
 
+clean:
+	rm -rf $(BINPATH)/*
+
 generator:
 	cd ./cmd/generator/; $(GORUN) .
 
