@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
-	message := compressor.Hello("Damn")
+	buffer := compressor.Compress([]byte("Damn"))
+	message := string(compressor.Decompress(buffer))
 	fmt.Println(message)
 }

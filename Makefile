@@ -19,5 +19,5 @@ generator-build:
 	cd ./cmd/generator/; $(GOBUILD) -o $(BINPATH)/generator
 
 compressor-test:
-	cd ./internal/compressor/; $(GOTEST) .
+	cd ./internal/compressor/; $(GOTEST) -bench=. -benchmem
 
