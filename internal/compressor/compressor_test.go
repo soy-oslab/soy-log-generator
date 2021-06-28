@@ -1,69 +1,153 @@
-package compressor
+package compressor_test
 
 import (
-	"bytes"
-	"encoding/gob"
-	"github.com/bxcodec/faker/v3"
+	"github.com/soyoslab/soy_log_generator/compressor"
+	"math/rand"
+	"strings"
 	"testing"
+	"time"
 )
 
-type TestStruct struct {
-	Inta  int   `faker:"boundary_start=5, boundary_end=10"`
-	Int8  int8  `faker:"boundary_start=100, boundary_end=1000"`
-	Int16 int16 `faker:"boundary_start=123, boundary_end=1123"`
-	Int32 int32 `faker:"boundary_start=-10, boundary_end=8123"`
-	Int64 int64 `faker:"boundary_start=31, boundary_end=88"`
-
-	UInta  uint   `faker:"boundary_start=35, boundary_end=152"`
-	UInt8  uint8  `faker:"boundary_start=5, boundary_end=1425"`
-	UInt16 uint16 `faker:"boundary_start=245, boundary_end=2125"`
-	UInt32 uint32 `faker:"boundary_start=0, boundary_end=40"`
-	UInt64 uint64 `faker:"boundary_start=14, boundary_end=50"`
-
-	ASString []string          `faker:"len=100"`
-	SString  string            `faker:"len=100"`
-	MSString map[string]string `faker:"len=100"`
-	MIint    map[int]int       `faker:"boundary_start=5, boundary_end=10"`
-}
-
-func TestCompressor(t *testing.T) {
+func TestGzipCompressor(t *testing.T) {
 	source := "Hello World"
-	buffer := Compress([]byte(source))
-	target := string(Decompress(buffer))
+	c := &compressor.GzipComp{}
+	buffer := c.Compress([]byte(source))
+	target := string(c.Decompress(buffer))
 	if source != target {
 		t.Errorf("%s(source) != %s(target)", source, target)
 	}
 }
 
-func BenchmarkCompress1000(b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		b.StopTimer()
-		// data generation in here
-		data := TestStruct{}
-		var buffer bytes.Buffer
-		_ = faker.SetRandomMapAndSliceSize(1000)
-		_ = faker.FakeData(&data)
-		encoder := gob.NewEncoder(&buffer)
-		_ = encoder.Encode(data)
-		b.StartTimer()
-		// execution in here
-		_ = Compress(buffer.Bytes())
+func TestZstdCompressor(t *testing.T) {
+	source := "Hello World"
+	c := &compressor.ZstdComp{}
+	buffer := c.Compress([]byte(source))
+	target := string(c.Decompress(buffer))
+	if source != target {
+		t.Errorf("%s(source) != %s(target)", source, target)
 	}
 }
 
-func BenchmarkDecompress1000(b *testing.B) {
+func getRandomString(length int) string {
+	rand.Seed(time.Now().UnixNano())
+	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ" +
+		"abcdefghijklmnopqrstuvwxyzåäö" +
+		"0123456789")
+	var b strings.Builder
+	for i := 0; i < length; i++ {
+		b.WriteRune(chars[rand.Intn(len(chars))])
+	}
+	return b.String() // E.g. "ExcbsVQs"
+}
+
+func BenchmarkGzipCompress16MB(b *testing.B) {
+	c := &compressor.GzipComp{}
 	for n := 0; n < b.N; n++ {
 		b.StopTimer()
 		// data generation in here
-		data := TestStruct{}
-		var temp bytes.Buffer
-		_ = faker.SetRandomMapAndSliceSize(1000)
-		_ = faker.FakeData(&data)
-		encoder := gob.NewEncoder(&temp)
-		_ = encoder.Encode(data)
-		buffer := Compress(temp.Bytes())
+		message := getRandomString(4096 * 4096)
 		b.StartTimer()
 		// execution in here
-		_ = Decompress(buffer)
+		result := c.Compress([]byte(message))
+		_ = result
+		// fmt.Printf("\n%v to %v\n", len([]byte(message)), len(result))
+	}
+}
+
+func BenchmarkGzipDecompress16MB(b *testing.B) {
+	c := &compressor.GzipComp{}
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		// data generation in here
+		message := getRandomString(4096 * 4096)
+		buffer := c.Compress([]byte(message))
+		b.StartTimer()
+		// execution in here
+		result := c.Decompress(buffer)
+		_ = result
+	}
+}
+
+func BenchmarkZstdCompress16MB(b *testing.B) {
+	c := &compressor.ZstdComp{}
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		// data generation in here
+		message := getRandomString(4096 * 4096)
+		b.StartTimer()
+		// execution in here
+		result := c.Compress([]byte(message))
+		_ = result
+		// fmt.Printf("\n%v to %v\n", len([]byte(message)), len(result))
+	}
+}
+
+func BenchmarkZstdDecompress16MB(b *testing.B) {
+	c := &compressor.ZstdComp{}
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		// data generation in here
+		message := getRandomString(4096 * 4096)
+		buffer := c.Compress([]byte(message))
+		b.StartTimer()
+		// execution in here
+		result := c.Decompress(buffer)
+		_ = result
+	}
+}
+
+func BenchmarkGzipCompress4KB(b *testing.B) {
+	c := &compressor.GzipComp{}
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		// data generation in here
+		message := getRandomString(4096)
+		b.StartTimer()
+		// execution in here
+		result := c.Compress([]byte(message))
+		_ = result
+		// fmt.Printf("\n%v to %v\n", len([]byte(message)), len(result))
+	}
+}
+
+func BenchmarkGzipDecompress4KB(b *testing.B) {
+	c := &compressor.GzipComp{}
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		// data generation in here
+		message := getRandomString(4096)
+		buffer := c.Compress([]byte(message))
+		b.StartTimer()
+		// execution in here
+		result := c.Decompress(buffer)
+		_ = result
+	}
+}
+
+func BenchmarkZstdCompress4KB(b *testing.B) {
+	c := &compressor.ZstdComp{}
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		// data generation in here
+		message := getRandomString(4096)
+		b.StartTimer()
+		// execution in here
+		result := c.Compress([]byte(message))
+		_ = result
+		// fmt.Printf("\n%v to %v\n", len([]byte(message)), len(result))
+	}
+}
+
+func BenchmarkZstdDecompress4KB(b *testing.B) {
+	c := &compressor.ZstdComp{}
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		// data generation in here
+		message := getRandomString(4096)
+		buffer := c.Compress([]byte(message))
+		b.StartTimer()
+		// execution in here
+		result := c.Decompress(buffer)
+		_ = result
 	}
 }

@@ -6,7 +6,20 @@ import (
 )
 
 func main() {
-	buffer := compressor.Compress([]byte("Damn"))
-	message := string(compressor.Decompress(buffer))
-	fmt.Println(message)
+	{
+		fmt.Println("Zstd CASE")
+		c := &compressor.ZstdComp{}
+		fmt.Println([]byte("Damn"))
+		buffer := c.Compress([]byte("Damn"))
+		fmt.Println(buffer)
+		fmt.Println(c.Decompress(buffer))
+	}
+	{
+		fmt.Println("Gzip CASE")
+		c := &compressor.GzipComp{}
+		fmt.Println([]byte("Damn"))
+		buffer := c.Compress([]byte("Damn"))
+		fmt.Println(buffer)
+		fmt.Println(c.Decompress(buffer))
+	}
 }
