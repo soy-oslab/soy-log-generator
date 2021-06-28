@@ -2,7 +2,11 @@ GOBIN=go
 GORUN=$(GOBIN) run
 GOBUILD=$(GOBIN) build
 GOTEST=$(GOBIN) test
+
 BINPATH=$(shell pwd)/bin
+
+BENCHTIME=1s
+BENCHTIMEOUT=10m
 
 all: generator
 
@@ -19,5 +23,5 @@ generator-build:
 	cd ./cmd/generator/; $(GOBUILD) -o $(BINPATH)/generator
 
 compressor-test:
-	cd ./internal/compressor/; $(GOTEST) -bench=. -benchmem
+	cd ./internal/compressor/; $(GOTEST) -v -bench=. -benchmem -benchtime=$(BENCHTIME) -timeout $(BENCHTIMEOUT)
 
