@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/soyoslab/soy_log_generator/compressor"
+	"github.com/soyoslab/soy_log_generator/pkg/compressor"
 )
 
 func main() {
