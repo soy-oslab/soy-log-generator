@@ -16,12 +16,12 @@ clean:
 	rm -rf $(BINPATH)/*
 
 generator:
-	cd ./cmd/generator/; $(GORUN) .
+	$(GORUN) ./cmd/generator/main.go
 
 generator-build:
 	mkdir -p $(BINPATH)/generator
-	cd ./cmd/generator/; $(GOBUILD) -o $(BINPATH)/generator
+	$(GOBUILD) -o $(BINPATH)/generator ./cmd/generator/main.go
 
 compressor-test:
-	cd ./internal/compressor/; $(GOTEST) -v -bench=. -benchmem -benchtime=$(BENCHTIME) -timeout $(BENCHTIMEOUT)
+	$(GOTEST) -v -bench=. -benchmem -benchtime=$(BENCHTIME) -timeout $(BENCHTIMEOUT) ./pkg/compressor
 

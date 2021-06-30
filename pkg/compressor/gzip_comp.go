@@ -7,17 +7,20 @@ import (
 	"log"
 )
 
+// GzipComp is a compressor which uses the gzip
 type GzipComp struct {
 }
 
+// Compress compresses the data based on the gzip
 func (l *GzipComp) Compress(data []byte) []byte {
 	var buffer bytes.Buffer
 	writer := gzip.NewWriter(&buffer)
-	writer.Write(data)
+	_, _ = writer.Write(data)
 	writer.Close()
 	return buffer.Bytes()
 }
 
+// Decompress decompresses the data which was compressed by gzip
 func (l *GzipComp) Decompress(data []byte) []byte {
 	buffer := bytes.NewBuffer(data)
 	reader, err := gzip.NewReader(buffer)

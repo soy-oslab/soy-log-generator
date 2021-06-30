@@ -1,7 +1,7 @@
 package compressor_test
 
 import (
-	"github.com/soyoslab/soy_log_generator/compressor"
+	"github.com/soyoslab/soy_log_generator/pkg/compressor"
 	"math/rand"
 	"strings"
 	"testing"
@@ -10,9 +10,11 @@ import (
 
 func TestGzipCompressor(t *testing.T) {
 	source := "Hello World"
+	// var c compressor.Compressor // This also valid
 	c := &compressor.GzipComp{}
 	buffer := c.Compress([]byte(source))
 	target := string(c.Decompress(buffer))
+
 	if source != target {
 		t.Errorf("%s(source) != %s(target)", source, target)
 	}
