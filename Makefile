@@ -23,5 +23,8 @@ generator-build:
 	$(GOBUILD) -o $(BINPATH)/generator ./cmd/generator/main.go
 
 compressor-test:
-	$(GOTEST) -v -bench=. -benchmem -benchtime=$(BENCHTIME) -timeout $(BENCHTIMEOUT) ./pkg/compressor
+	$(GOTEST) -cover -v ./pkg/compressor
+
+compressor-bench:
+	$(GOTEST) -bench=. -benchmem -benchtime=$(BENCHTIME) -timeout $(BENCHTIMEOUT) ./pkg/compressor
 
