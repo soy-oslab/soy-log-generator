@@ -17,6 +17,8 @@ parser.add_argument('--flush-ratio', dest='flush_ratio', metavar='N',
                     default=0.1, type=float, help="every N seconds flush")
 parser.add_argument('--max-sleep', dest='interval', metavar='N',
                     default=1, type=int, help="sleep max N seconds")
+parser.add_argument('--append', dest='use_append', nargs='?', default=1,
+                    help="using append manner based to open file")
 
 args = parser.parse_args()
 
@@ -27,7 +29,10 @@ if not os.path.isfile(args.src):
 
 src = open(args.src, "r")
 try:
-    dst = open(args.dst, "w")
+    if args.use_append is None:
+        dst = open(args.dst, 'a')
+    else:
+        dst = open(args.dst, "w")
 except OSError:
     logging.error(f"you must specify the valid \
             target file directory ({args.dst})")
