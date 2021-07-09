@@ -24,25 +24,19 @@ func NewBuffering(filename string, processFunction func(string, interface{}) err
 	buffering.name = filename
 	if processFunction == nil {
 		err = errors.New("buffering's process function must be specified")
-		goto functionNilException
+		goto exception
 	}
 	buffering.lineProcessingFunction = processFunction
 	buffering.file, err = os.Open(filename)
 	if err != nil {
-		goto openException
+		goto exception
 	}
-	_, err = buffering.file.Seek(0, io.SeekEnd)
-	if err != nil {
-		goto seekException
-	}
+	buffering.file.Seek(0, io.SeekEnd)
 	buffering.reader = bufio.NewReader(buffering.file)
 
 	return buffering, err
 
-seekException:
-	buffering.Close()
-openException:
-functionNilException:
+exception:
 	return nil, err
 }
 
