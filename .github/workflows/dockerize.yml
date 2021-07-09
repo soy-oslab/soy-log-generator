@@ -1,0 +1,41 @@
+name: dockerize
+on:
+  push:
+    branches: [ main ]
+defaults:
+  run:
+    shell: bash
+jobs:
+  dockerize:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Grab source
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
+    - name: Install python-pip
+      run: python -m pip install --upgrade pip
+    - name: Generate Full Source Archive
+      run: |
+        pip install git-archive-all
+        make gen-src-archive
+    - name: Create a docker context
+      run: |
+        mkdir -p /tmp/dockerize/generator
+        tar xzf build/generator.src.tar.gz --strip 1 -C /tmp/dockerize/generator
+    - name: Log into docker registry
+      run:  docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}" ${{ secrets.DOCKER_REGISTRY_ENDPOINT }}
+    - name: Dockerize bin
+      run: |
+        docker build \
+          -t ${{ secrets.DOCKER_REGISTRY_ENDPOINT }}/generator:latest \
+          -f scripts/Dockerfile \
+          /tmp/dockerize
+    - name: Push Docker image
+      run: docker push ${{ secrets.DOCKER_REGISTRY_ENDPOINT }}/generator

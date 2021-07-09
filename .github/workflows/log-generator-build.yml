@@ -1,0 +1,27 @@
+name: log-generator-build
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+defaults:
+  run:
+    shell: bash
+jobs:
+  log-generator-build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Grab source
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    - name: Build
+      run: make all
+    - name: Test
+      run: make test
+    - name: Send Coverage
+      run: make codacy-coverage-push
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
