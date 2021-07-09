@@ -13,6 +13,7 @@ import (
 
 func setup(prefix string) (*buffering.Buffering, error) {
 	testFile, err := os.CreateTemp("", prefix)
+	log.SetFlags(log.Lshortfile)
 	if err != nil {
 		log.Fatalf("test file creation failed: %v", err)
 	}
@@ -42,6 +43,7 @@ func TestNewBufferingSuccess(t *testing.T) {
 }
 
 func TestNewBufferingFailed_InvalidFileName(t *testing.T) {
+	log.SetFlags(log.Lshortfile)
 	b, err := buffering.NewBuffering("", func(str string, args interface{}) error { return nil })
 	if b != nil && err == nil {
 		t.Errorf("invalid file name test failed %v", err)
@@ -49,6 +51,7 @@ func TestNewBufferingFailed_InvalidFileName(t *testing.T) {
 }
 
 func TestNewBufferingFailed_NilFunction(t *testing.T) {
+	log.SetFlags(log.Lshortfile)
 	testFile, err := os.CreateTemp("", "test-new-buffering-success")
 	if err != nil {
 		log.Fatalf("test file creation failed: %v", err)
@@ -117,6 +120,7 @@ func TestUpdateToValidOffset(t *testing.T) {
 }
 
 func writeFiles(filename string) []string {
+	log.SetFlags(log.Lshortfile)
 	targetFile, _ := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0755)
 	stringList := []string{"0\n", "11\n", "222\n", "3333\n", "44444\n"}
 	for _, str := range stringList {
