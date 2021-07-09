@@ -23,8 +23,19 @@ generator-build:
 	$(GOBUILD) -o $(BINPATH)/generator ./cmd/generator/main.go
 
 compressor-test:
-	$(GOTEST) -cover -v ./pkg/compressor
+	cd ./pkg/compressor; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
+	go tool cover -func=coverage.out
+	rm coverage.out
 
 compressor-bench:
 	$(GOTEST) -bench=. -benchmem -benchtime=$(BENCHTIME) -timeout $(BENCHTIMEOUT) ./pkg/compressor
 
+buffering-test:
+	cd ./pkg/buffering; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
+	go tool cover -func=coverage.out
+	rm coverage.out
+
+watcher-test:
+	cd ./pkg/watcher; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
+	go tool cover -func=coverage.out
+	rm coverage.out
