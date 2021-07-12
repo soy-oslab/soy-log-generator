@@ -13,4 +13,14 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# binary directory
 bin/
+build/
+
+# Json files
+*.json
+
+# Test environment
+.env
+*.txt

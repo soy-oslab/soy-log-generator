@@ -10,7 +10,7 @@ BENCHTIMEOUT=10m
 
 all: generator-build
 
-test: compressor-test buffering-test watcher-test
+test: compressor-test buffering-test watcher-test scheduler-test ring-test
 
 clean:
 	rm -rf $(BUILD_PATH)/*
@@ -37,6 +37,16 @@ buffering-test:
 
 watcher-test:
 	cd ./pkg/watcher; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
+	go tool cover -func=coverage.out
+	rm coverage.out
+
+scheduler-test:
+	cd ./pkg/scheduler; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
+	go tool cover -func=coverage.out
+	rm coverage.out
+
+ring-test:
+	cd ./pkg/ring; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
 	go tool cover -func=coverage.out
 	rm coverage.out
 

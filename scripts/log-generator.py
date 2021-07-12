@@ -16,7 +16,7 @@ parser.add_argument('--target-file', dest='dst', type=str,
 parser.add_argument('--flush-ratio', dest='flush_ratio', metavar='N',
                     default=0.1, type=float, help="every N seconds flush")
 parser.add_argument('--max-sleep', dest='interval', metavar='N',
-                    default=1, type=int, help="sleep max N seconds")
+                    default=1000, type=int, help="sleep max N millis")
 parser.add_argument('--append', dest='use_append', nargs='?', default=1,
                     help="using append manner based to open file")
 
@@ -45,6 +45,6 @@ for line in tqdm.tqdm(src.readlines()):
     if time.time() - now > args.flush_ratio:
         dst.flush()
         now = time.time()
-    time.sleep(random.randint(0, args.interval))
+    time.sleep(random.randint(0, args.interval)/1000)
 src.close()
 dst.close()
