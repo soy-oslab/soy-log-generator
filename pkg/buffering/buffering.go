@@ -17,7 +17,7 @@ type Buffering struct {
 
 // NewBuffering makes a new structure based on Buffering type
 func NewBuffering(filename string, processFunction func(string, interface{}) error) (*Buffering, error) {
-	var err error = nil
+	var err error
 
 	buffering := new(Buffering)
 

@@ -30,7 +30,7 @@ type Watcher struct {
 // NewWatcher creates Watcher structure
 // Note that this function start to run the Spectator goroutine
 func NewWatcher() (*Watcher, error) {
-	var err error = nil
+	var err error
 	watcher := new(Watcher)
 	watcher.workingGroup = new(sync.WaitGroup)
 	watcher.infoTable = make(map[string]FileInfo)
