@@ -83,7 +83,7 @@ func (w *Watcher) ProcessFile(filename string) error {
 		goto exception
 	}
 	info.buffer.UpdateToValidOffset()
-	_, err = info.buffer.DoReadLines(filename)
+	_, err = info.buffer.DoReadLines(filename, info.buffer.GetFile())
 exception:
 	return err
 }

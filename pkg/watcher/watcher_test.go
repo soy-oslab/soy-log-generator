@@ -2,8 +2,10 @@ package watcher_test
 
 import (
 	"errors"
+	"io"
 	"log"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -99,6 +101,11 @@ func TestSpectatorOneFile(t *testing.T) {
 
 	index := 0
 	err := w.AddFile(file.Name(), func(str string, args interface{}) error {
+		rv := reflect.ValueOf(args)
+		file := rv.Index(1).Interface().(*os.File)
+		if cur, _ := file.Seek(0, io.SeekCurrent); cur%6 != 0 {
+			t.Errorf("invalid write pointer")
+		}
 		if sampleString[index] != str {
 			t.Errorf("write Detection Failed")
 		}
