@@ -43,6 +43,7 @@ exception:
 // Close collects the resources in the Buffering structure
 func (b *Buffering) Close() error {
 	err := b.file.Close()
+	b.file = nil
 	return err
 }
 

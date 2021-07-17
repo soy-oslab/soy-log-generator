@@ -103,10 +103,13 @@ func (s *Scheduler) Close() {
 	if s != nil && s.watcher != nil {
 		select {
 		case err := <-s.watcher.GetErrorChannel():
-			log.Panicln(err)
+			if err != nil {
+				log.Panicln(err)
+			}
 		default:
 			break
 		}
 		s.watcher.Close()
+		s.watcher = nil
 	}
 }

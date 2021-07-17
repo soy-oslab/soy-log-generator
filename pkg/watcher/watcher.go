@@ -152,6 +152,7 @@ func (w *Watcher) Stop() {
 func (w *Watcher) Close() error {
 	for _, info := range w.infoTable {
 		info.buffer.Close()
+		info.buffer = nil
 	}
 	close(w.stop)
 	return w.notifier.Close()

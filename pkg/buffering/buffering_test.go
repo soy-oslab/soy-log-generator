@@ -30,8 +30,9 @@ func setup(prefix string) (*buffering.Buffering, error) {
 }
 
 func teardown(b *buffering.Buffering) {
+	filename := b.GetFile().Name()
 	b.Close()
-	os.Remove(b.GetFile().Name())
+	os.Remove(filename)
 }
 
 func TestNewBufferingSuccess(t *testing.T) {
