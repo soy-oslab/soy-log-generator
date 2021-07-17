@@ -77,6 +77,9 @@ func (s *Scheduler) process(f SubmitFunc, arr []interface{}) error {
 // processString prcesses the string based on the scheduling policy
 func (s *Scheduler) processString() {
 	for {
+		if atomic.LoadInt32(&s.IsRun) == 0 {
+			break
+		}
 		select {
 		case <-s.hot.Kick:
 			s.process(s.submit.Hot, s.hot.Pop(s.config.HotRingThreshold))

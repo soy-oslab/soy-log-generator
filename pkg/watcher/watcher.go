@@ -154,6 +154,6 @@ func (w *Watcher) Close() error {
 		info.buffer.Close()
 		info.buffer = nil
 	}
-	close(w.stop)
+
 	return w.notifier.Close()
 }

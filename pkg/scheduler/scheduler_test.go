@@ -4,24 +4,25 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	w "github.com/soyoslab/soy_log_generator/pkg/watcher"
 	"log"
 	"os"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	w "github.com/soyoslab/soy_log_generator/pkg/watcher"
 )
 
 type EvalFunc func(s *Scheduler, err error) bool
 
-const FULL_CONFIG_TEXT = `{
+const FullConfigText = `{
     "targetIp": "localhost",
     "targetPort": "8972",
     "hotRingCapacity": %d,
     "coldRingCapacity": %d,
-    "coldTimeoutMilli": 3000,
-    "hotRingThreshold": 2,
-    "coldRingThreshold": 2,
+    "coldTimeoutMilli": 1000,
+    "hotRingThreshold": 0,
+    "coldRingThreshold": 0,
     "pollingIntervalMilli": 1000,
     "files": [
         {
@@ -41,7 +42,7 @@ const FULL_CONFIG_TEXT = `{
     ]
   }`
 
-const CONFIG_TEXT = `{
+const ConfigText = `{
     "hotRingThreshold": 0,
     "coldRingThreshold": 0,
     "hotRingCapacity": %d,
@@ -55,13 +56,6 @@ const CONFIG_TEXT = `{
                 "error",
                 "critical"
             ]
-        },
-        {
-            "filename": "%v",
-            "hotFilter": [
-                "critical",
-                "warn"
-            ]
         }
     ]
   }`
@@ -70,7 +64,7 @@ func (s *Scheduler) getWatcher() *w.Watcher {
 	return s.watcher
 }
 
-func setup(prefix string, configText string) string {
+func setup(prefix string, configText string) (string, string) {
 	log.SetFlags(log.Lshortfile)
 	testFile, err := os.CreateTemp("", prefix)
 	if err != nil {
@@ -86,11 +80,13 @@ func setup(prefix string, configText string) string {
 	writer.WriteString(configText)
 	writer.Flush()
 
-	return configFile.Name()
+	return testFile.Name(), configFile.Name()
 }
 
-func teardown(filename string) {
-	os.Remove(filename)
+func teardown(filenames []string) {
+	for _, filename := range filenames {
+		os.Remove(filename)
+	}
 }
 
 func getConfig(configText string, hotRingCapacity uint64, coldRingCapacity uint64) string {
@@ -117,8 +113,8 @@ func getSubmit() SubmitOperations {
 }
 
 func fileContentsTest(t *testing.T, submit SubmitOperations, testName string, text string, f EvalFunc) {
-	filename := setup(testName, text)
-	defer teardown(filename)
+	testFilename, filename := setup(testName, text)
+	defer teardown([]string{filename, testFilename})
 	s, err := InitScheduler(filename, submit, nil)
 	if f(s, err) {
 		t.Errorf("%v failed", testName)
@@ -126,17 +122,68 @@ func fileContentsTest(t *testing.T, submit SubmitOperations, testName string, te
 	defer s.Close()
 }
 
+func TestDuplication(t *testing.T) {
+	evalFunc := func(_ *Scheduler, err error) bool { return err == nil }
+	testFile, err := os.CreateTemp("", "test1.txt")
+	if err != nil {
+		log.Fatalf("temproary file-1 creation failed")
+	}
+	defer teardown([]string{testFile.Name()})
+	config := fmt.Sprintf(FullConfigText, 1, 2, testFile.Name(), testFile.Name())
+	fileContentsTest(t, getSubmit(), "watcher-test-duplication-test", config, evalFunc)
+}
+
+func getPatternConfig(pattern string) ([]string, string) {
+	file1, err := os.CreateTemp("", "pattern-test.txt")
+	if err != nil {
+		log.Fatalf("temproary file-1 creation failed")
+	}
+	file2, err := os.CreateTemp("", "pattern-test.txt")
+	if err != nil {
+		log.Fatalf("temproary file-2 creation failed")
+	}
+	config := fmt.Sprintf(ConfigText, 1, 2, pattern)
+	return []string{file1.Name(), file2.Name()}, config
+}
+
+func TestPatternFiles(t *testing.T) {
+	evalFunc := func(s *Scheduler, err error) bool {
+		if err != nil {
+			return true
+		}
+		if len(s.GetConfig().Files) != 2 {
+			return true
+		}
+		return false
+	}
+	filenames, config := getPatternConfig("/tmp/pattern-test.txt*")
+	defer teardown(filenames)
+	fileContentsTest(t, getSubmit(), "pattern-valid-test", config, evalFunc)
+}
+
+func TestPatternFilesInvalid(t *testing.T) {
+	evalFunc := func(s *Scheduler, err error) bool {
+		if err == nil {
+			return true
+		}
+		return false
+	}
+	filenames, config := getPatternConfig("/tmp/*pattern-test.txt")
+	defer teardown(filenames)
+	fileContentsTest(t, getSubmit(), "pattern-invalid-test", config, evalFunc)
+}
+
 func TestInitScheduler(t *testing.T) {
 	evalFunc := func(s *Scheduler, err error) bool {
 		return s == nil || err != nil
 	}
-	fileContentsTest(t, getSubmit(), "watcher-test-init-scheduler-valid-full", getConfig(FULL_CONFIG_TEXT, 1, 2), evalFunc)
-	fileContentsTest(t, getSubmit(), "watcher-test-init-scheduler-valid-partial", getConfig(CONFIG_TEXT, 1, 2), evalFunc)
+	fileContentsTest(t, getSubmit(), "watcher-test-init-scheduler-valid-full", getConfig(FullConfigText, 1, 2), evalFunc)
+	fileContentsTest(t, getSubmit(), "watcher-test-init-scheduler-valid-partial", getConfig(FullConfigText, 1, 2), evalFunc)
 }
 
 func TestNilClose(t *testing.T) {
-	filename := setup("watcher-test-nil-close", getConfig(CONFIG_TEXT, 1, 2))
-	defer teardown(filename)
+	testFilename, filename := setup("watcher-test-nil-close", getConfig(FullConfigText, 1, 2))
+	defer teardown([]string{testFilename, filename})
 	s, _ := InitScheduler(filename, getSubmit(), nil)
 	watcher := s.getWatcher()
 	defer func() {
@@ -154,17 +201,17 @@ func TestInitSchedulerInvalid(t *testing.T) {
 	fileContentsTest(t, getSubmit(), "watcher-test-init-scheduler-invalid-files-count", `{"files":[]}`, evalFunc)
 	submit := getSubmit()
 	submit.Hot = nil
-	fileContentsTest(t, submit, "watcher-test-init-scheduler-invalid-hot-submit", getConfig(CONFIG_TEXT, 1, 2), evalFunc)
+	fileContentsTest(t, submit, "watcher-test-init-scheduler-invalid-hot-submit", getConfig(FullConfigText, 1, 2), evalFunc)
 	submit = getSubmit()
 	submit.Cold = nil
-	fileContentsTest(t, submit, "watcher-test-init-scheduler-invalid-cold-submit", getConfig(CONFIG_TEXT, 1, 2), evalFunc)
-	fileContentsTest(t, submit, "watcher-test-init-scheduler-invalid-hot-ring-capacity", getConfig(CONFIG_TEXT, 0, 2), evalFunc)
-	fileContentsTest(t, submit, "watcher-test-init-scheduler-invalid-cold-ring-capacity", getConfig(CONFIG_TEXT, 1, 1), evalFunc)
+	fileContentsTest(t, submit, "watcher-test-init-scheduler-invalid-cold-submit", getConfig(FullConfigText, 1, 2), evalFunc)
+	fileContentsTest(t, submit, "watcher-test-init-scheduler-invalid-hot-ring-capacity", getConfig(FullConfigText, 0, 2), evalFunc)
+	fileContentsTest(t, submit, "watcher-test-init-scheduler-invalid-cold-ring-capacity", getConfig(FullConfigText, 1, 1), evalFunc)
 }
 
 func TestIsHotString(t *testing.T) {
-	filename := setup("watcher-test-is-hot-string", getConfig(CONFIG_TEXT, 1, 2))
-	defer teardown(filename)
+	testFilename, filename := setup("watcher-test-is-hot-string", getConfig(FullConfigText, 1, 2))
+	defer teardown([]string{testFilename, filename})
 	s, _ := InitScheduler(filename, getSubmit(), func(_ string) bool { return false })
 	if s.isHotString(s.GetConfig().Files[0].Filename, "warn e r r o r") {
 		t.Errorf("cold sentence is evaluated to hot")
@@ -239,8 +286,8 @@ func TestRun(t *testing.T) {
 	var hotCounter int32 = 0
 	var coldCounter int32 = 0
 
-	filename := setup("watcher-test-run", getConfig(CONFIG_TEXT, 1, 2))
-	defer teardown(filename)
+	testFilename, filename := setup("watcher-test-run", getConfig(FullConfigText, 1, 2))
+	defer teardown([]string{testFilename, filename})
 	hot := func(messages []Message) error {
 		for _, message := range messages {
 			log.Println(string(message.Data))

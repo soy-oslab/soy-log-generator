@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"github.com/cloudflare/ahocorasick"
-	"github.com/soyoslab/soy_log_collector/pkg/rpc"
 	"github.com/soyoslab/soy_log_generator/pkg/ring"
 	w "github.com/soyoslab/soy_log_generator/pkg/watcher"
 )
@@ -30,11 +29,19 @@ type Config struct {
 	Files             []File `json:"files"`
 	HotRingThreshold  uint64 `json:"hotRingThreshold" default:"0"`
 	ColdRingThreshold uint64 `json:"coldRingThreshold" default:"0"`
+	ColdSendThreshold uint64 `json:"coldSendThresholdBytes" default:"4096"`
+}
+
+// FileInfo contains the file data block metadata
+type FileInfo struct {
+	Timestamp int64
+	Filename  string
+	Length    uint64
 }
 
 // Message structure is used to transport with log-collector
 type Message struct {
-	Info rpc.LogInfo
+	Info FileInfo
 	Data []byte
 }
 

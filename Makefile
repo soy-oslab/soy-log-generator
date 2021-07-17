@@ -10,7 +10,7 @@ BENCHTIMEOUT=10m
 
 all: generator-build
 
-test: compressor-test buffering-test watcher-test scheduler-test ring-test
+test: compressor-test buffering-test watcher-test scheduler-test ring-test transport-test
 
 clean:
 	rm -rf $(BUILD_PATH)/*
@@ -49,6 +49,13 @@ ring-test:
 	cd ./pkg/ring; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
 	go tool cover -func=coverage.out
 	rm coverage.out
+
+transport-test:
+	cd ./pkg/transport; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
+	go tool cover -func=coverage.out
+	rm coverage.out
+
+
 
 codacy-coverage-push:
 	$(GOTEST) -coverprofile=coverage.out ./...

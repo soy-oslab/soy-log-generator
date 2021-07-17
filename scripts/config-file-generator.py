@@ -15,12 +15,12 @@ export GENERATOR_COLD_TIMEOUT_MILLIS=3000
 export GENERATOR_POLLING_INTERVAL_MILLIS=1000
 export GENERATOR_HOT_RING_THRESHOLD=0
 export GENERATOR_COLD_RING_THRESHOLD=0
+export GENERATOR_COLD_SEND_THRESHOLD_BYTES=4096
 export GENERATOR_FILES='[
   {"filename":"test1.txt", "hotFilter":["error","critical"]},
   {"filename":"test2.txt", "hotFilter":["critical","warn"]}
 ]'
 """
-
 
 def get_value_from_environment(env: str) -> str:
     val = os.getenv(env).strip()
@@ -38,6 +38,7 @@ if __name__ == "__main__":
     cold_timeout_millis = get_value_from_environment("GENERATOR_COLD_TIMEOUT_MILLIS")
     hot_ring_threshold = get_value_from_environment("GENERATOR_HOT_RING_THRESHOLD")
     cold_ring_threshold = get_value_from_environment("GENERATOR_COLD_RING_THRESHOLD")
+    cold_send_threshold = get_value_from_environment("GENERATOR_COLD_SEND_THRESHOLD_BYTES")
     polling_interval_millis = get_value_from_environment(
         "GENERATOR_POLLING_INTERVAL_MILLIS"
     )
@@ -51,6 +52,7 @@ if __name__ == "__main__":
         "coldTimeoutMilli": int(cold_timeout_millis),
         "hotRingThreshold": int(hot_ring_threshold),
         "coldRingThreshold": int(cold_ring_threshold),
+        "coldSendThresholdBytes": int(cold_send_threshold),
         "pollingIntervalMilli": int(polling_interval_millis),
         "files": ast.literal_eval(files),
     }

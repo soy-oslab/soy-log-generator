@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 
@@ -67,10 +68,34 @@ func (s *Scheduler) initHotFilter(files []File) {
 	}
 }
 
+func getConfigFiles(filenames []string, meta File) []File {
+	files := []File{}
+	for _, filename := range filenames {
+		file := File{filename, meta.HotFilter}
+		files = append(files, file)
+	}
+	return files
+}
+
+func configPatternTranslation(metaList []File) ([]File, error) {
+	files := []File{}
+	for _, meta := range metaList {
+		matches, err := filepath.Glob(meta.Filename)
+		if err != nil || matches == nil {
+			return nil, err
+		}
+		files = append(files, getConfigFiles(matches, meta)...)
+	}
+	return files, nil
+}
+
 // initConfig initializes a Config structure
 func (s *Scheduler) initConfig(configFilepath string) error {
-	var err error
-	var b []byte
+	var (
+		err    error
+		b      []byte
+		dupMap map[string]bool
+	)
 
 	defaults.SetDefaults(&s.config)
 	b, err = ioutil.ReadFile(configFilepath)
@@ -82,9 +107,23 @@ func (s *Scheduler) initConfig(configFilepath string) error {
 		goto out
 	}
 
-	if len(s.config.Files) == 0 {
-		err = errors.New("file must exist at least one file")
+	s.config.Files, err = configPatternTranslation(s.config.Files)
+	if err != nil {
 		goto out
+	}
+
+	if len(s.config.Files) == 0 || len(s.config.Files) >= 256 {
+		err = errors.New("number of files is over 0 and under 256")
+		goto out
+	}
+
+	dupMap = make(map[string]bool)
+	for _, file := range s.config.Files {
+		if _, ok := dupMap[file.Filename]; ok {
+			err = errors.New("duplicated file doesn't allow")
+			goto out
+		}
+		dupMap[file.Filename] = true
 	}
 
 out:
@@ -101,10 +140,11 @@ func (s *Scheduler) initWatcher() error {
 // Close returns the resource related on the scheduling
 func (s *Scheduler) Close() {
 	if s != nil && s.watcher != nil {
+		atomic.StoreInt32(&s.IsRun, 0)
 		select {
 		case err := <-s.watcher.GetErrorChannel():
-			if err != nil {
-				log.Panicln(err)
+			if !strings.Contains(err.Error(), os.ErrClosed.Error()) && err != nil {
+				log.Panicln(err, os.ErrClosed)
 			}
 		default:
 			break
