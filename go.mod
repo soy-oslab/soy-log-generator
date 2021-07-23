@@ -16,6 +16,7 @@ require (
 	github.com/Workiva/go-datastructures v1.0.53
 	github.com/apache/thrift v0.14.2 // indirect
 	github.com/armon/go-metrics v0.3.9 // indirect
+	github.com/bbalet/stopwords v1.0.0
 	github.com/cloudflare/ahocorasick v0.0.0-20210425175752-730270c3e184
 	github.com/edwingeng/doublejump v0.0.0-20200330080233-e4ea8bd1cbed // indirect
 	github.com/fatih/color v1.12.0 // indirect
@@ -31,6 +32,7 @@ require (
 	github.com/hashicorp/go-hclog v0.16.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/jbrukh/bayesian v0.0.0-20200318221351-d726b684ca4a
 	github.com/klauspost/compress v1.13.1
 	github.com/klauspost/cpuid/v2 v2.0.8 // indirect
 	github.com/klauspost/reedsolomon v1.9.12 // indirect

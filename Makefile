@@ -10,7 +10,9 @@ BENCHTIMEOUT=10m
 
 all: generator-build
 
-test: compressor-test buffering-test watcher-test scheduler-test ring-test transport-test
+test: compressor-test buffering-test watcher-test \
+			scheduler-test ring-test transport-test \
+			classifier-test
 
 clean:
 	rm -rf $(BUILD_PATH)/*
@@ -55,7 +57,10 @@ transport-test:
 	go tool cover -func=coverage.out
 	rm coverage.out
 
-
+classifier-test:
+	cd ./pkg/classifier; $(GOTEST) -cover -v -coverprofile=../../coverage.out .
+	go tool cover -func=coverage.out
+	rm coverage.out
 
 codacy-coverage-push:
 	$(GOTEST) -coverprofile=coverage.out ./...
