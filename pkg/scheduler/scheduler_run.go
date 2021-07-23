@@ -114,11 +114,9 @@ func (s *Scheduler) isHotString(filename string, str string) bool {
 	if !ok {
 		log.Panicf("invalid filename detected %v", filename)
 	}
-	if len(matcher.MatchThreadSafe([]byte(str))) > 0 {
-		return true
-	}
+	isHot := len(matcher.MatchThreadSafe([]byte(str))) > 0
 	if s.customFilter != nil {
-		return s.customFilter(str)
+		return s.customFilter(str, isHot)
 	}
-	return false
+	return isHot
 }

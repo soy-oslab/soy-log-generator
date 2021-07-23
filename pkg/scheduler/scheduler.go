@@ -10,7 +10,7 @@ import (
 type SubmitFunc func(messages []Message) error
 
 // CustomFilterFunc is the function pointer of the custom hot/cold filtering
-type CustomFilterFunc func(str string) bool
+type CustomFilterFunc func(str string, isHot bool) bool
 
 // File contains the each file's information in json manner
 type File struct {

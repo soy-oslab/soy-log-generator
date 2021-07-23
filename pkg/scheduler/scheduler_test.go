@@ -212,7 +212,7 @@ func TestInitSchedulerInvalid(t *testing.T) {
 func TestIsHotString(t *testing.T) {
 	testFilename, filename := setup("watcher-test-is-hot-string", getConfig(FullConfigText, 1, 2))
 	defer teardown([]string{testFilename, filename})
-	s, _ := InitScheduler(filename, getSubmit(), func(_ string) bool { return false })
+	s, _ := InitScheduler(filename, getSubmit(), func(_ string, isHot bool) bool { return isHot })
 	if s.isHotString(s.GetConfig().Files[0].Filename, "warn e r r o r") {
 		t.Errorf("cold sentence is evaluated to hot")
 	}
