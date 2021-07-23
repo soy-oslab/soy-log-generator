@@ -25,7 +25,7 @@ func (p *coldPort) Push(ctx context.Context, args *rpc.LogMessage, reply *rpc.Re
 
 func main() {
 	s := server.NewServer()
-	s.RegisterName("hotPort", new(hotPort), "")
-	s.RegisterName("coldPort", new(coldPort), "")
+	s.RegisterName("HotPort", new(hotPort), "")
+	s.RegisterName("ColdPort", new(coldPort), "")
 	s.Serve("tcp", "localhost:8972")
 }
