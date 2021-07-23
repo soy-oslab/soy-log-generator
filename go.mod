@@ -10,6 +10,8 @@ replace github.com/soyoslab/soy_log_generator/pkg/scheduler => ./pkg/scheduler
 
 replace github.com/soyoslab/soy_log_generator/pkg/ring => ./pkg/ring
 
+replace github.com/soyoslab/soy_log_generator/pkg/classifier => ./pkg/classifier
+
 go 1.16
 
 require (

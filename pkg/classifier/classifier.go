@@ -1,7 +1,6 @@
 package classifier
 
 import (
-	"log"
 	"os"
 	"strings"
 
@@ -28,14 +27,10 @@ func InitClassfier(savepath string) (*Classifier, error) {
 	var err error
 	c := new(Classifier)
 	stat, err := os.Stat(savepath)
-	if stat != nil {
-		log.Println(os.IsNotExist(err), stat.Size() > int64(0))
-	}
 	if !os.IsNotExist(err) && stat.Size() > int64(0) {
-		log.Println("this")
 		c.classifier, err = b.NewClassifierFromFile(savepath)
 	} else {
-		log.Println("that")
+		err = nil
 		c.classifier = b.NewClassifier(Hot, Cold)
 	}
 	c.filepath = savepath
@@ -53,8 +48,8 @@ func preprocessing(str string) []string {
 	return slice
 }
 
-// learn learns the string based on bayesian
-func (c *Classifier) learn(str string, state b.Class) {
+// Learn learns the string based on bayesian
+func (c *Classifier) Learn(str string, state b.Class) {
 	slice := preprocessing(str)
 	c.classifier.Learn(slice, state)
 }
@@ -65,8 +60,8 @@ func (c *Classifier) Backup() error {
 	return err
 }
 
-// classfy identifies this string is hot or not
-func (c *Classifier) classify(str string) (map[b.Class]float64, b.Class) {
+// Classify identifies this string is hot or not
+func (c *Classifier) Classify(str string) (map[b.Class]float64, b.Class) {
 	slice := preprocessing(str)
 	scores, likely, _ := c.classifier.ProbScores(slice)
 	class := c.classes[likely]
