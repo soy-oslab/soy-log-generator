@@ -93,6 +93,7 @@ func InitTransport(configFileName string, customFilterFunc s.CustomFilterFunc) (
 	}
 	t.err = nil
 	t.scheduler = scheduler
+	t.namespace = t.scheduler.GetConfig().Namespace
 	t.cold.meta.threshold = scheduler.GetConfig().ColdSendThreshold
 	t.cold.meta.timeout = time.Duration(scheduler.GetConfig().ColdTimeout) * time.Millisecond
 	t.cold.meta.start = time.Now()
