@@ -20,6 +20,7 @@ type File struct {
 
 // Config contains the application running configurations in json manner
 type Config struct {
+	Namespace         string `json:"namespace" default:"anonymous"`
 	TargetIP          string `json:"targetIp" default:"localhost"`
 	TargetPort        string `json:"targetPort" default:"8972"`
 	HotRingCapacity   uint64 `json:"hotRingCapacity" default:"32"`

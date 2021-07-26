@@ -48,6 +48,7 @@ type Transport struct {
 	submit     SubmitFunc
 	fileMap    map[string]uint8
 	packetMap  []string
+	namespace  string
 }
 
 // getAddr returns the address of the rpcx server
@@ -207,6 +208,7 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 	}
 
 	compactPacketMap(&packet)
+	packet.Namespace = t.namespace
 	err = t.submit(&packet, t.hot.xclient)
 	if err != nil {
 		goto exception
@@ -263,6 +265,7 @@ func (t *Transport) coldSubmitFunc(messages []s.Message) error {
 			goto exception
 		}
 		compactPacketMap(&meta.packet)
+		meta.packet.Namespace = t.namespace
 		err = t.submit(&meta.packet, t.cold.xclient)
 		if err != nil {
 			goto exception

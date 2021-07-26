@@ -38,6 +38,8 @@ require (
 	github.com/klauspost/compress v1.13.1
 	github.com/klauspost/cpuid/v2 v2.0.8 // indirect
 	github.com/klauspost/reedsolomon v1.9.12 // indirect
+	github.com/kr/pretty v0.2.1
+	github.com/kr/text v0.2.0 // indirect
 	github.com/lucas-clemente/quic-go v0.21.2 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mcuadros/go-defaults v1.2.0

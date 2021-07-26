@@ -184,6 +184,7 @@ func TestHotSubmitFunc(t *testing.T) {
 	trans := Transport{}
 	trans.fileMap = make(map[string]uint8)
 	trans.fileMap["test"] = 0
+	trans.namespace = "test"
 	trans.packetMap = []string{"test"}
 	validSubmitFunc(t, &trans, trans.hotSubmitFunc)
 }
@@ -193,6 +194,7 @@ func TestColdSubmitFunc(t *testing.T) {
 	trans.fileMap = make(map[string]uint8)
 	trans.fileMap["test"] = 0
 	trans.packetMap = []string{"test"}
+	trans.namespace = "test"
 	trans.compressor = &c.GzipComp{}
 	validSubmitFunc(t, &trans, trans.coldSubmitFunc)
 }
@@ -231,6 +233,7 @@ func TestHotInvalidSubmit(t *testing.T) {
 	trans.fileMap = make(map[string]uint8)
 	trans.fileMap["test"] = 0
 	trans.packetMap = []string{"test"}
+	trans.namespace = "test"
 	invalidSubmitFunc(t, "hot", false, &trans, trans.hotSubmitFunc)
 }
 

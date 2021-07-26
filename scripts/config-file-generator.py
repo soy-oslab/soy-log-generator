@@ -7,6 +7,7 @@ import ast
 """
 # environment setting example
 
+export GENERATOR_NAMESPACE='kube-namespace'
 export GENERATOR_TARGET_IP=localhost
 export GENERATOR_TARGET_PORT=8972
 export GENERATOR_HOT_RING_CAPACITY=8
@@ -22,6 +23,7 @@ export GENERATOR_FILES='[
 ]'
 """
 
+
 def get_value_from_environment(env: str) -> str:
     val = os.getenv(env).strip()
     if len(val) == 0:
@@ -31,6 +33,7 @@ def get_value_from_environment(env: str) -> str:
 
 
 if __name__ == "__main__":
+    namespace = get_value_from_environment("GENERATOR_NAMESPACE")
     ip = get_value_from_environment("GENERATOR_TARGET_IP")
     port = get_value_from_environment("GENERATOR_TARGET_PORT")
     hot_ring_capacity = get_value_from_environment("GENERATOR_HOT_RING_CAPACITY")
@@ -38,13 +41,16 @@ if __name__ == "__main__":
     cold_timeout_millis = get_value_from_environment("GENERATOR_COLD_TIMEOUT_MILLIS")
     hot_ring_threshold = get_value_from_environment("GENERATOR_HOT_RING_THRESHOLD")
     cold_ring_threshold = get_value_from_environment("GENERATOR_COLD_RING_THRESHOLD")
-    cold_send_threshold = get_value_from_environment("GENERATOR_COLD_SEND_THRESHOLD_BYTES")
+    cold_send_threshold = get_value_from_environment(
+        "GENERATOR_COLD_SEND_THRESHOLD_BYTES"
+    )
     polling_interval_millis = get_value_from_environment(
         "GENERATOR_POLLING_INTERVAL_MILLIS"
     )
     files = get_value_from_environment("GENERATOR_FILES")
 
     configContents = {
+        "namespace": namespace,
         "targetIp": ip,
         "targetPort": port,
         "hotRingCapacity": int(hot_ring_capacity),
