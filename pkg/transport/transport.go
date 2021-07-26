@@ -150,13 +150,16 @@ func getPacket(messages []s.Message, fileMap map[string]uint8, packetMap []strin
 		info := getInfo(message)
 		packet.Info = append(packet.Info, info)
 		packet.Buffer = append(packet.Buffer, message.Data...)
+		if len(message.Info.Filename) == 0 {
+			return rpc.LogMessage{}, fmt.Errorf("filename must be specified")
+		}
 		idx := fileMap[message.Info.Filename]
 		packet.Files.Indexes = append(packet.Files.Indexes, idx)
 		size += message.Info.Length
 	}
 
 	if size != uint64(len(packet.Buffer)) {
-		return packet, fmt.Errorf("buffer and info size mismatch (buffer: %d, info: %d)", len(packet.Buffer), size)
+		return rpc.LogMessage{}, fmt.Errorf("buffer and info size mismatch (buffer: %d, info: %d)", len(packet.Buffer), size)
 	}
 	return packet, nil
 }
@@ -203,6 +206,7 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 		return nil
 	}
 
+	compactPacketMap(&packet)
 	err = t.submit(&packet, t.hot.xclient)
 	if err != nil {
 		goto exception
@@ -210,6 +214,27 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 	return nil
 exception:
 	return exceptionHandler(t, err)
+}
+
+// compactPacketMap compacts the packet mapping table
+func compactPacketMap(packet *rpc.LogMessage) {
+	seq := uint8(0)
+	var indexes []uint8
+	mapping := make(map[string]uint8)
+	for _, fileIdx := range packet.Files.Indexes {
+		if idx, ok := mapping[packet.Files.MapTable[fileIdx]]; !ok {
+			mapping[packet.Files.MapTable[fileIdx]] = seq
+			indexes = append(indexes, seq)
+			seq++
+		} else {
+			indexes = append(indexes, idx)
+		}
+	}
+	packet.Files.Indexes = indexes
+	packet.Files.MapTable = make([]string, len(mapping))
+	for k, v := range mapping {
+		packet.Files.MapTable[v] = k
+	}
 }
 
 // coldSubmitFunc submits the cold messages
@@ -237,6 +262,7 @@ func (t *Transport) coldSubmitFunc(messages []s.Message) error {
 		if err != nil {
 			goto exception
 		}
+		compactPacketMap(&meta.packet)
 		err = t.submit(&meta.packet, t.cold.xclient)
 		if err != nil {
 			goto exception

@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -81,8 +82,8 @@ func configPatternTranslation(metaList []File) ([]File, error) {
 	files := []File{}
 	for _, meta := range metaList {
 		matches, err := filepath.Glob(meta.Filename)
-		if err != nil || matches == nil {
-			return nil, err
+		if len(matches) == 0 || err != nil {
+			return nil, fmt.Errorf("matches error detected (str:%s;err:%v;matches:%v)", meta.Filename, err, matches)
 		}
 		files = append(files, getConfigFiles(matches, meta)...)
 	}

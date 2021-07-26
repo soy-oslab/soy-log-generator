@@ -96,6 +96,7 @@ func messageGeneration(data string, length uint64, isCompressed bool) []s.Messag
 	val := s.Message{}
 	val.Data = []byte(data)
 	val.Info.Length = length
+	val.Info.Filename = "test1.txt"
 	messages = append(messages, val)
 	if isCompressed {
 		compressor := &c.GzipComp{}
@@ -131,17 +132,24 @@ func TestPrintPacket(t *testing.T) {
 	fileMap := make(map[string]uint8)
 	fileMap["test"] = 0
 	packetMap := []string{"test"}
-	packet, _ := getPacket(messages, fileMap, packetMap)
+	packet, err := getPacket(messages, fileMap, packetMap)
+	if err != nil {
+		t.Errorf("get packet failed %v", err)
+	}
 	PrintPacket(packet, "test", false, nil)
 }
 
 func TestPrintCompressedPacket(t *testing.T) {
-	messages := messageGeneration("test", 4, true)
+	messages := messageGeneration("test", 4, false)
 	fileMap := make(map[string]uint8)
 	fileMap["test"] = 0
 	packetMap := []string{"test"}
-	packet, _ := getPacket(messages, fileMap, packetMap)
+	packet, err := getPacket(messages, fileMap, packetMap)
+	if err != nil {
+		t.Errorf("get packet failed %v", err)
+	}
 	compressor := &c.GzipComp{}
+	packet.Buffer, _ = compressor.Compress(packet.Buffer)
 	PrintPacket(packet, "test", true, compressor)
 }
 
@@ -174,11 +182,17 @@ func validSubmitFunc(t *testing.T, trans *Transport, f func([]s.Message) error) 
 
 func TestHotSubmitFunc(t *testing.T) {
 	trans := Transport{}
+	trans.fileMap = make(map[string]uint8)
+	trans.fileMap["test"] = 0
+	trans.packetMap = []string{"test"}
 	validSubmitFunc(t, &trans, trans.hotSubmitFunc)
 }
 
 func TestColdSubmitFunc(t *testing.T) {
 	trans := Transport{}
+	trans.fileMap = make(map[string]uint8)
+	trans.fileMap["test"] = 0
+	trans.packetMap = []string{"test"}
 	trans.compressor = &c.GzipComp{}
 	validSubmitFunc(t, &trans, trans.coldSubmitFunc)
 }
@@ -214,6 +228,9 @@ func invalidSubmitFunc(t *testing.T, target string, isCompressed bool, trans *Tr
 
 func TestHotInvalidSubmit(t *testing.T) {
 	trans := Transport{}
+	trans.fileMap = make(map[string]uint8)
+	trans.fileMap["test"] = 0
+	trans.packetMap = []string{"test"}
 	invalidSubmitFunc(t, "hot", false, &trans, trans.hotSubmitFunc)
 }
 

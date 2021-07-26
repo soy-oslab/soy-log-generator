@@ -11,7 +11,7 @@ if ! git-archive-all --help &> /dev/null; then
 fi
 
 mkdir -p build
-git-archive-all --prefix="generator" --force-submodules $DEST
+git-archive-all --prefix="$PROJECT" --force-submodules $DEST
 
 echo "# $0: DONE!"
 ls -lh $DEST
