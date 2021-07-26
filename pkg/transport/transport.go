@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	rpcx "github.com/smallnest/rpcx/client"
@@ -43,6 +44,7 @@ type Transport struct {
 	hot        Port
 	cold       Port
 	addr       string
+	retryTime  time.Duration
 	compressor c.Compressor
 	err        error
 	submit     SubmitFunc
@@ -96,6 +98,7 @@ func InitTransport(configFileName string, customFilterFunc s.CustomFilterFunc) (
 	t.namespace = t.scheduler.GetConfig().Namespace
 	t.cold.meta.threshold = scheduler.GetConfig().ColdSendThreshold
 	t.cold.meta.timeout = time.Duration(scheduler.GetConfig().ColdTimeout) * time.Millisecond
+	t.retryTime = time.Duration(1) * time.Second
 	t.cold.meta.start = time.Now()
 	t.compressor = &c.GzipComp{}
 	t.submit = Submit
@@ -187,10 +190,7 @@ func PrintPacket(packet rpc.LogMessage, prefix string, isCompressed bool, compre
 func Submit(packet *rpc.LogMessage, xclient rpcx.XClient) error {
 	reply := &rpc.Reply{}
 	err := xclient.Call(context.Background(), "Push", packet, reply)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // hotSubmitFunc submits the hot messages
@@ -210,9 +210,14 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 
 	compactPacketMap(&packet)
 	packet.Namespace = t.namespace
-	err = t.submit(&packet, t.hot.xclient)
-	if err != nil {
-		goto exception
+	for {
+		err = t.submit(&packet, t.hot.xclient)
+		if err == nil {
+			break
+		} else if !strings.Contains(err.Error(), "hotport is full") {
+			goto exception
+		}
+		time.Sleep(t.retryTime)
 	}
 	return nil
 exception:
@@ -267,9 +272,14 @@ func (t *Transport) coldSubmitFunc(messages []s.Message) error {
 		}
 		compactPacketMap(&meta.packet)
 		meta.packet.Namespace = t.namespace
-		err = t.submit(&meta.packet, t.cold.xclient)
-		if err != nil {
-			goto exception
+		for {
+			err = t.submit(&meta.packet, t.cold.xclient)
+			if err == nil {
+				break
+			} else if !strings.Contains(err.Error(), "cotport is full") {
+				goto exception
+			}
+			time.Sleep(t.retryTime)
 		}
 		meta.packet = rpc.LogMessage{}
 	}

@@ -23,6 +23,7 @@ func filter(str string, isHot bool) bool {
 		mutex.Lock()
 		c.Learn(str, classifier.Hot)
 		mutex.Unlock()
+		log.Println("insert hot string", str, isHot)
 		return true
 	}
 	mutex.Lock()
@@ -30,8 +31,10 @@ func filter(str string, isHot bool) bool {
 	mutex.Unlock()
 	result, _ := c.Classify(str)
 	if result[classifier.Hot] > 1e-10 {
+		log.Println("insert hot string", str, isHot, result)
 		return true
 	}
+	log.Println("insert cold string", str, isHot, result)
 	return false
 
 }
