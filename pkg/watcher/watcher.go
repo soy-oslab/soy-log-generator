@@ -150,10 +150,20 @@ func (w *Watcher) Stop() {
 
 // Close frees resources
 func (w *Watcher) Close() error {
+	var err error = nil
 	for _, info := range w.infoTable {
-		info.buffer.Close()
-		info.buffer = nil
+		if info.buffer != nil {
+			info.buffer.Close()
+			info.buffer = nil
+		} else {
+			err = errors.New("nil buffer detected")
+		}
 	}
 
-	return w.notifier.Close()
+	if w.notifier != nil {
+		w.notifier.Close()
+	} else {
+		err = errors.New("nil notifier detected")
+	}
+	return err
 }
