@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -83,6 +83,10 @@ func InitTransport(configFileName string, customFilterFunc s.CustomFilterFunc) (
 		scheduler *s.Scheduler
 		config    s.Config
 		files     []s.File
+		packet    *rpc.LogMessage
+		reply     *rpc.Reply
+		xclient   rpcx.XClient
+		hostname  string
 	)
 	t := new(Transport)
 	submitOps := s.SubmitOperations{}
@@ -95,7 +99,8 @@ func InitTransport(configFileName string, customFilterFunc s.CustomFilterFunc) (
 	}
 	t.err = nil
 	t.scheduler = scheduler
-	t.namespace = t.scheduler.GetConfig().Namespace
+	hostname, _ = os.Hostname()
+	t.namespace = fmt.Sprintf("%s:%s", t.scheduler.GetConfig().Namespace, hostname)
 	t.cold.meta.threshold = scheduler.GetConfig().ColdSendThreshold
 	t.cold.meta.timeout = time.Duration(scheduler.GetConfig().ColdTimeout) * time.Millisecond
 	t.retryTime = time.Duration(1) * time.Second
@@ -117,6 +122,13 @@ func InitTransport(configFileName string, customFilterFunc s.CustomFilterFunc) (
 
 	t.hot.xclient, _ = getXClient(t.addr, "HotPort")
 	t.cold.xclient, _ = getXClient(t.addr, "ColdPort")
+
+	xclient, _ = getXClient(t.addr, "Init")
+	packet = &rpc.LogMessage{}
+	packet.Namespace = t.namespace
+	packet.Files.MapTable = t.packetMap
+	reply = &rpc.Reply{}
+	err = xclient.Call(context.Background(), "Push", packet, reply)
 
 	return t, err
 exception:
@@ -169,23 +181,6 @@ func getPacket(messages []s.Message, fileMap map[string]uint8, packetMap []strin
 	return packet, nil
 }
 
-// PrintPacket prints the information in the packet
-func PrintPacket(packet rpc.LogMessage, prefix string, isCompressed bool, compressor c.Compressor) {
-	if isCompressed {
-		buffer, err := compressor.Decompress(packet.Buffer)
-		if err != nil {
-			log.Panic("Packet decompress failed")
-		}
-		packet.Buffer = buffer
-	}
-	wp := uint64(0)
-	for i, info := range packet.Info {
-		filename := packet.Files.MapTable[packet.Files.Indexes[i]]
-		log.Printf("[%s:%s] %s (size: %d)\n", prefix, filename, string(packet.Buffer[wp:wp+info.Length]), len(packet.Buffer))
-		wp += info.Length
-	}
-}
-
 // Submit submits the packet to server by using rpcx
 func Submit(packet *rpc.LogMessage, xclient rpcx.XClient) error {
 	reply := &rpc.Reply{}
@@ -208,8 +203,8 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 		return nil
 	}
 
-	compactPacketMap(&packet)
 	packet.Namespace = t.namespace
+	packet.Files.MapTable = nil
 	for {
 		err = t.submit(&packet, t.hot.xclient)
 		if err == nil {
@@ -222,27 +217,6 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 	return nil
 exception:
 	return exceptionHandler(t, err)
-}
-
-// compactPacketMap compacts the packet mapping table
-func compactPacketMap(packet *rpc.LogMessage) {
-	seq := uint8(0)
-	var indexes []uint8
-	mapping := make(map[string]uint8)
-	for _, fileIdx := range packet.Files.Indexes {
-		if idx, ok := mapping[packet.Files.MapTable[fileIdx]]; !ok {
-			mapping[packet.Files.MapTable[fileIdx]] = seq
-			indexes = append(indexes, seq)
-			seq++
-		} else {
-			indexes = append(indexes, idx)
-		}
-	}
-	packet.Files.Indexes = indexes
-	packet.Files.MapTable = make([]string, len(mapping))
-	for k, v := range mapping {
-		packet.Files.MapTable[v] = k
-	}
 }
 
 // coldSubmitFunc submits the cold messages
@@ -265,13 +239,12 @@ func (t *Transport) coldSubmitFunc(messages []s.Message) error {
 	meta.packet.Buffer = append(meta.packet.Buffer, packet.Buffer...)
 	meta.packet.Files.Indexes = append(meta.packet.Files.Indexes, packet.Files.Indexes...)
 	if uint64(len(meta.packet.Buffer)) >= meta.threshold || time.Since(meta.start) >= meta.timeout {
-		meta.packet.Files.MapTable = t.packetMap
 		meta.packet.Buffer, err = t.compressor.Compress(meta.packet.Buffer)
 		if err != nil {
 			goto exception
 		}
-		compactPacketMap(&meta.packet)
 		meta.packet.Namespace = t.namespace
+		meta.packet.Files.MapTable = nil
 		for {
 			err = t.submit(&meta.packet, t.cold.xclient)
 			if err == nil {

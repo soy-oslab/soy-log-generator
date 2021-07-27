@@ -42,14 +42,17 @@ func filter(str string, isHot bool) bool {
 func run(configFilePath string) {
 	t, err := transport.InitTransport(configFilePath, filter)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println("init error detected:", err)
+		goto exit
 	}
 	defer t.Close()
 	log.Println("transport running start")
 	err = t.Run()
 	if err != nil {
-		log.Println("error detected: ", err)
+		log.Println("running error detected:", err)
+		goto exit
 	}
+exit:
 	wg.Done()
 }
 

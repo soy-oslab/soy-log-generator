@@ -12,6 +12,8 @@ replace github.com/soyoslab/soy_log_generator/pkg/ring => ./pkg/ring
 
 replace github.com/soyoslab/soy_log_generator/pkg/classifier => ./pkg/classifier
 
+replace github.com/soyoslab/soy_log_generator/internal/app/server => ./internal/app/server
+
 go 1.16
 
 require (

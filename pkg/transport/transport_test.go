@@ -7,9 +7,11 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	rpcx "github.com/smallnest/rpcx/client"
 	"github.com/soyoslab/soy_log_collector/pkg/rpc"
+	"github.com/soyoslab/soy_log_generator/internal/app/server"
 	c "github.com/soyoslab/soy_log_generator/pkg/compressor"
 	s "github.com/soyoslab/soy_log_generator/pkg/scheduler"
 )
@@ -127,39 +129,13 @@ func TestGetPacketInvalid(t *testing.T) {
 	}
 }
 
-func TestPrintPacket(t *testing.T) {
-	messages := messageGeneration("test", 4, false)
-	fileMap := make(map[string]uint8)
-	fileMap["test"] = 0
-	packetMap := []string{"test"}
-	packet, err := getPacket(messages, fileMap, packetMap)
-	if err != nil {
-		t.Errorf("get packet failed %v", err)
-	}
-	PrintPacket(packet, "test", false, nil)
-}
-
-func TestPrintCompressedPacket(t *testing.T) {
-	messages := messageGeneration("test", 4, false)
-	fileMap := make(map[string]uint8)
-	fileMap["test"] = 0
-	packetMap := []string{"test"}
-	packet, err := getPacket(messages, fileMap, packetMap)
-	if err != nil {
-		t.Errorf("get packet failed %v", err)
-	}
-	compressor := &c.GzipComp{}
-	packet.Buffer, _ = compressor.Compress(packet.Buffer)
-	PrintPacket(packet, "test", true, compressor)
-}
-
 func TestInvalidSubmit(t *testing.T) {
 	messages := messageGeneration("test", 4, false)
 	fileMap := make(map[string]uint8)
 	fileMap["test"] = 0
 	packetMap := []string{"test"}
 	packet, _ := getPacket(messages, fileMap, packetMap)
-	xclient, _ := getXClient("localhost:8972", "HotPort")
+	xclient, _ := getXClient("localhost:8972", "NONE")
 	err := Submit(&packet, xclient)
 	if err == nil {
 		t.Errorf("invalid submit requested but it works")
@@ -243,4 +219,11 @@ func TestColdInvalidSubmit(t *testing.T) {
 	trans, _ := InitTransport(configFileName, nil)
 	invalidSubmitFunc(t, "cold", false, trans, trans.coldSubmitFunc)
 	trans.Close()
+}
+
+func TestMain(m *testing.M) {
+	go server.Run()
+	// heating-up
+	time.Sleep(time.Duration(1) * time.Second)
+	os.Exit(m.Run())
 }
