@@ -47,7 +47,6 @@ func InitScheduler(configFilepath string, submitOperations SubmitOperations, cus
 	return s, err
 
 exception:
-	s.Close()
 	return nil, err
 }
 
