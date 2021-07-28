@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 
+	"sync/atomic"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/soyoslab/soy_log_generator/pkg/buffering"
 )
@@ -25,6 +27,7 @@ type Watcher struct {
 	workingGroup *sync.WaitGroup
 	stop         chan bool
 	errors       chan error
+	isStop       uint32
 }
 
 // NewWatcher creates Watcher structure
@@ -39,6 +42,7 @@ func NewWatcher() (*Watcher, error) {
 	watcher.workingGroup.Add(1)
 	watcher.stop = make(chan bool)
 	watcher.errors = make(chan error)
+	atomic.StoreUint32(&watcher.isStop, 0)
 	go watcher.Spectator()
 
 	return watcher, err
@@ -123,6 +127,7 @@ func (w *Watcher) Spectator() {
 		}
 	}
 exception:
+	atomic.StoreUint32(&w.isStop, 1)
 	w.workingGroup.Done()
 	w.errors <- err
 }
@@ -145,7 +150,9 @@ func (w *Watcher) Wait() {
 
 // Stop signals the stop signal to the EventProcessor
 func (w *Watcher) Stop() {
-	w.stop <- true
+	if atomic.LoadUint32(&w.isStop) == 0 {
+		w.stop <- true
+	}
 }
 
 // Close frees resources
@@ -161,6 +168,8 @@ func (w *Watcher) Close() error {
 	}
 
 	if w.notifier != nil {
+		w.Stop()
+		w.Wait()
 		w.notifier.Close()
 	} else {
 		err = errors.New("nil notifier detected")
