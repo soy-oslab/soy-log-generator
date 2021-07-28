@@ -209,7 +209,7 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 		err = t.submit(&packet, t.hot.xclient)
 		if err == nil {
 			break
-		} else if !strings.Contains(err.Error(), "hotport is full") {
+		} else if !strings.Contains(err.Error(), "is full") {
 			goto exception
 		}
 		time.Sleep(t.retryTime)
@@ -249,7 +249,7 @@ func (t *Transport) coldSubmitFunc(messages []s.Message) error {
 			err = t.submit(&meta.packet, t.cold.xclient)
 			if err == nil {
 				break
-			} else if !strings.Contains(err.Error(), "coldport is full") {
+			} else if !strings.Contains(err.Error(), "is full") {
 				goto exception
 			}
 			time.Sleep(t.retryTime)
