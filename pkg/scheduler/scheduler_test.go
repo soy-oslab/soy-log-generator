@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime/pprof"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -279,6 +281,7 @@ func counter(t *testing.T, hotCounter *int32, coldCounter *int32, s *Scheduler) 
 			s.Close()
 		}
 	}
+	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 	log.Fatalf("test-run timeout detected")
 }
 
@@ -307,4 +310,12 @@ func TestRun(t *testing.T) {
 	go background(s)
 	go counter(t, &hotCounter, &coldCounter, s)
 	s.Run()
+}
+
+func TestMain(m *testing.M) {
+	files, _ := filepath.Glob("/tmp/pattern-test.txt*")
+	for _, f := range files {
+		os.Remove(f)
+	}
+	os.Exit(m.Run())
 }

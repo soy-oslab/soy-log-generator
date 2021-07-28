@@ -23,6 +23,9 @@ func InitScheduler(configFilepath string, submitOperations SubmitOperations, cus
 	if err = s.initConfig(configFilepath); err != nil {
 		goto exception
 	}
+	if s.config.PollingInterval > 1000 {
+		log.Fatalf("Please set the polling interval to below than 1000ms (current: %dms)\n", s.config.PollingInterval)
+	}
 	if err = s.initWatcher(); err != nil {
 		goto exception
 	}
@@ -47,6 +50,7 @@ func InitScheduler(configFilepath string, submitOperations SubmitOperations, cus
 	return s, err
 
 exception:
+	s.Close()
 	return nil, err
 }
 
@@ -139,17 +143,36 @@ func (s *Scheduler) initWatcher() error {
 
 // Close returns the resource related on the scheduling
 func (s *Scheduler) Close() {
-	if s != nil && s.watcher != nil {
-		atomic.StoreInt32(&s.IsRun, 0)
-		select {
-		case err := <-s.watcher.GetErrorChannel():
-			if !strings.Contains(err.Error(), os.ErrClosed.Error()) && err != nil {
-				log.Panicln(err, os.ErrClosed)
-			}
-		default:
-			break
+	if s == nil {
+		return
+	}
+	atomic.StoreInt32(&s.IsRun, 0)
+	if s.watcher == nil {
+		return
+	}
+	select {
+	case err := <-s.watcher.GetErrorChannel():
+		if !strings.Contains(err.Error(), os.ErrClosed.Error()) && err != nil {
+			log.Panicln(err, os.ErrClosed)
 		}
-		s.watcher.Close()
-		s.watcher = nil
+	default:
+		break
+	}
+	s.hot.Close()
+	s.cold.Close()
+	s.watcher.Close()
+	defer func() {
+		recover()
+	}()
+	select {
+	case _, ok := <-s.hot.Kick:
+		if ok {
+			close(s.hot.Kick)
+		}
+	case _, ok := <-s.cold.Kick:
+		if ok {
+			close(s.cold.Kick)
+		}
+	default:
 	}
 }

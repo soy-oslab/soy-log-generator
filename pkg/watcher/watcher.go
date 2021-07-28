@@ -25,9 +25,8 @@ type Watcher struct {
 	infoTable    map[string]FileInfo
 	notifier     *fsnotify.Watcher
 	workingGroup *sync.WaitGroup
-	stop         chan bool
-	errors       chan error
 	isStop       uint32
+	errors       chan error
 }
 
 // NewWatcher creates Watcher structure
@@ -40,7 +39,6 @@ func NewWatcher() (*Watcher, error) {
 	watcher.notifier, err = fsnotify.NewWatcher()
 
 	watcher.workingGroup.Add(1)
-	watcher.stop = make(chan bool)
 	watcher.errors = make(chan error)
 	atomic.StoreUint32(&watcher.isStop, 0)
 	go watcher.Spectator()
@@ -107,15 +105,15 @@ func (w *Watcher) GetNotifier() *fsnotify.Watcher {
 	return w.notifier
 }
 
-// Spectator runs the infinitely before it receives the stop signal
+// Spectator runs the infinitely before it receives the isStop signal
 // Also it passes an event to the EventProcessor
 func (w *Watcher) Spectator() {
 	var err error = nil
 	for {
-		select {
-		case _ = <-w.stop:
-			err = nil
+		if atomic.LoadUint32(&w.isStop) == 1 {
 			goto exception
+		}
+		select {
 		case event, _ := <-w.notifier.Events:
 			err = w.EventProcessor(event)
 			if err != nil {
@@ -127,9 +125,10 @@ func (w *Watcher) Spectator() {
 		}
 	}
 exception:
-	atomic.StoreUint32(&w.isStop, 1)
 	w.workingGroup.Done()
-	w.errors <- err
+	if err != nil {
+		w.errors <- err
+	}
 }
 
 // Remove removes the specific file hook
@@ -148,16 +147,15 @@ func (w *Watcher) Wait() {
 	w.workingGroup.Wait()
 }
 
-// Stop signals the stop signal to the EventProcessor
-func (w *Watcher) Stop() {
-	if atomic.LoadUint32(&w.isStop) == 0 {
-		w.stop <- true
-	}
+// Stop signals the isStop signal to the EventProcessor
+func (w *Watcher) stop() {
+	atomic.StoreUint32(&w.isStop, 1)
 }
 
 // Close frees resources
 func (w *Watcher) Close() error {
 	var err error = nil
+
 	for _, info := range w.infoTable {
 		if info.buffer != nil {
 			info.buffer.Close()
@@ -167,12 +165,8 @@ func (w *Watcher) Close() error {
 		}
 	}
 
-	if w.notifier != nil {
-		w.Stop()
-		w.Wait()
-		w.notifier.Close()
-	} else {
-		err = errors.New("nil notifier detected")
-	}
+	w.stop()
+	w.notifier.Close()
+	w.Wait()
 	return err
 }

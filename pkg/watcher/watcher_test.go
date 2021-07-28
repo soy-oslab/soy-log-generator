@@ -1,4 +1,4 @@
-package watcher_test
+package watcher
 
 import (
 	"errors"
@@ -10,11 +10,10 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/soyoslab/soy_log_generator/pkg/watcher"
 )
 
-func setup() (*watcher.Watcher, error) {
-	w, err := watcher.NewWatcher()
+func setup() (*Watcher, error) {
+	w, err := NewWatcher()
 	log.SetFlags(log.Lshortfile)
 	return w, err
 }
@@ -27,7 +26,7 @@ func makeFile(prefix string) *os.File {
 	return testFile
 }
 
-func teardown(w *watcher.Watcher) {
+func teardown(w *Watcher) {
 	for filename := range w.GetFileInfoTable() {
 		os.Remove(filename)
 	}
@@ -59,8 +58,6 @@ func TestValidAddFile(t *testing.T) {
 	if err != nil || info.GetBuffer().GetFile().Name() != file.Name() {
 		t.Errorf("valid add file test failed (cannot find added a file)")
 	}
-	w.Stop()
-	w.Wait()
 }
 
 func TestInvalidFunctionAddFile(t *testing.T) {
@@ -119,8 +116,6 @@ func TestSpectatorOneFile(t *testing.T) {
 		file.WriteString(str)
 		file.Sync()
 	}
-	w.Stop()
-	w.Wait()
 	if index != 3 {
 		t.Errorf("event detection failed")
 	}
@@ -163,8 +158,6 @@ func TestSpectatorThreeFile(t *testing.T) {
 	timer.Stop()
 
 	// finish
-	w.Stop()
-	w.Wait()
 }
 
 func TestInvalidGetFileInfo(t *testing.T) {
@@ -206,8 +199,6 @@ func TestValidRemoveTest(t *testing.T) {
 	}
 
 	// finish
-	w.Stop()
-	w.Wait()
 }
 
 func TestInvalidRemoveTest(t *testing.T) {

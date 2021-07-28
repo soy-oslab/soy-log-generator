@@ -95,7 +95,7 @@ func InitTransport(configFileName string, customFilterFunc s.CustomFilterFunc) (
 
 	scheduler, err = s.InitScheduler(configFileName, submitOps, customFilterFunc)
 	if err != nil {
-		goto exception
+		goto out
 	}
 	t.err = nil
 	t.scheduler = scheduler
@@ -129,10 +129,12 @@ func InitTransport(configFileName string, customFilterFunc s.CustomFilterFunc) (
 	packet.Files.MapTable = t.packetMap
 	reply = &rpc.Reply{}
 	err = xclient.Call(context.Background(), "Push", packet, reply)
+	if err != nil {
+		goto out
+	}
 
-	return t, err
-exception:
-	return nil, exceptionHandler(t, err)
+out:
+	return t, exceptionHandler(t, err)
 }
 
 // Run executes the scheduler
@@ -265,9 +267,7 @@ exception:
 func (t *Transport) Close() {
 	if t.scheduler != nil {
 		t.scheduler.Close()
-		t.scheduler = nil
 	}
-
 	t.cold.Close()
 	t.hot.Close()
 }

@@ -53,3 +53,10 @@ func (r *Ring) Pop(threshold uint64) []interface{} {
 func (r *Ring) Poll() []interface{} {
 	return r.Pop(0)
 }
+
+// Close disposes the ring buffer's contents
+func (r *Ring) Close() {
+	if r.buffer != nil {
+		r.buffer.Dispose()
+	}
+}

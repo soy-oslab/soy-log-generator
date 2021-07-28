@@ -211,6 +211,7 @@ func TestHotInvalidSubmit(t *testing.T) {
 	trans.packetMap = []string{"test"}
 	trans.namespace = "test"
 	invalidSubmitFunc(t, "hot", false, &trans, trans.hotSubmitFunc)
+	trans.Close()
 }
 
 func TestColdInvalidSubmit(t *testing.T) {
@@ -225,5 +226,6 @@ func TestMain(m *testing.M) {
 	go server.Run()
 	// heating-up
 	time.Sleep(time.Duration(1) * time.Second)
+	log.SetFlags(log.Lshortfile)
 	os.Exit(m.Run())
 }

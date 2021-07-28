@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 	"runtime/pprof"
 
 	"flag"
@@ -53,7 +54,6 @@ func run(configFilePath string) {
 	}
 exit:
 	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
-	log.Println("error detected:", err)
 	wg.Done()
 }
 
@@ -79,6 +79,7 @@ func main() {
 	defer fp.Close()
 	multiWriter := io.MultiWriter(fp, os.Stdout)
 	log.SetOutput(multiWriter)
+	log.SetFlags(log.Lshortfile)
 
 	mutex = new(sync.Mutex)
 
@@ -106,7 +107,11 @@ func main() {
 		wg.Add(1)
 		go run(*configFilePath)
 		wg.Wait()
-		log.Println("retry the running sequence after 10 seconds")
+		log.Printf("retry the running sequence after 10 seconds\n")
 		time.Sleep(time.Duration(10) * time.Second)
+		if runtime.NumGoroutine() > 1 {
+			log.Fatalf("goroutine must held 1 current has %d\n", runtime.NumGoroutine())
+		}
+		log.Printf("=============== current goroutine: %d ===============\n", runtime.NumGoroutine())
 	}
 }

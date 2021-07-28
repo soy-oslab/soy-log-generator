@@ -50,7 +50,7 @@ func (p *coldPort) Push(ctx context.Context, args *rpc.LogMessage, reply *rpc.Re
 
 func (p *initPort) Push(ctx context.Context, args *rpc.LogMessage, reply *rpc.Reply) error {
 	mapTable[(*args).Namespace] = (*args).Files.MapTable
-	log.Println("mapping table: %# v", pretty.Formatter((*args).Files.MapTable))
+	log.Printf("mapping table: %# v", pretty.Formatter((*args).Files.MapTable))
 	return nil
 }
 

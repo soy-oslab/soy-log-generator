@@ -9,6 +9,9 @@ import (
 
 // insertHotString inserts the string in the hot classifier manner
 func (s *Scheduler) insertHotString(message Message) error {
+	defer func() {
+		recover()
+	}()
 	err := s.hot.Push(message)
 	s.hot.Kick <- true
 	return err
@@ -16,6 +19,9 @@ func (s *Scheduler) insertHotString(message Message) error {
 
 // insertColdString inserts the string in the cold classifier mannner
 func (s *Scheduler) insertColdString(message Message) error {
+	defer func() {
+		recover()
+	}()
 	start := time.Now()
 	timeout := time.Duration(s.config.ColdTimeout) * time.Millisecond
 	for {
@@ -29,6 +35,9 @@ func (s *Scheduler) insertColdString(message Message) error {
 			start = time.Now()
 		} else {
 			time.Sleep(time.Duration(s.config.PollingInterval) * time.Millisecond)
+		}
+		if atomic.LoadInt32(&s.IsRun) == 0 {
+			break
 		}
 	}
 	return nil
