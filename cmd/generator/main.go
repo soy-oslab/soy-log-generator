@@ -38,7 +38,6 @@ func filter(str string, isHot bool) bool {
 	}
 	log.Println("insert cold string", str, isHot, result)
 	return false
-
 }
 
 func run(configFilePath string) {
@@ -110,7 +109,7 @@ func main() {
 		log.Printf("retry the running sequence after 10 seconds\n")
 		time.Sleep(time.Duration(10) * time.Second)
 		if runtime.NumGoroutine() > 1 {
-			log.Fatalf("goroutine must held 1 current has %d\n", runtime.NumGoroutine())
+			log.Printf("goroutine must held 1 current has %d\n", runtime.NumGoroutine())
 		}
 		log.Printf("=============== current goroutine: %d ===============\n", runtime.NumGoroutine())
 	}
