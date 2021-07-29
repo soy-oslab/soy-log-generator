@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"log"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -34,7 +35,7 @@ func (s *Scheduler) insertColdString(message Message) error {
 			s.cold.Kick <- true
 			start = time.Now()
 		} else {
-			time.Sleep(time.Duration(s.config.PollingInterval) * time.Millisecond)
+			runtime.Gosched()
 		}
 		if atomic.LoadInt32(&s.IsRun) == 0 {
 			break

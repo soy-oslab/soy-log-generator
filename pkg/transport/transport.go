@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -44,7 +45,6 @@ type Transport struct {
 	hot        Port
 	cold       Port
 	addr       string
-	retryTime  time.Duration
 	compressor c.Compressor
 	err        error
 	submit     SubmitFunc
@@ -103,7 +103,6 @@ func InitTransport(configFileName string, customFilterFunc s.CustomFilterFunc) (
 	t.namespace = fmt.Sprintf("%s:%s", t.scheduler.GetConfig().Namespace, hostname)
 	t.cold.meta.threshold = scheduler.GetConfig().ColdSendThreshold
 	t.cold.meta.timeout = time.Duration(scheduler.GetConfig().ColdTimeout) * time.Millisecond
-	t.retryTime = time.Duration(1) * time.Second
 	t.cold.meta.start = time.Now()
 	t.compressor = &c.GzipComp{}
 	t.submit = Submit
@@ -214,7 +213,7 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 		} else if !strings.Contains(err.Error(), "is full") {
 			goto exception
 		}
-		time.Sleep(t.retryTime)
+		runtime.Gosched()
 	}
 	return nil
 exception:
@@ -254,7 +253,7 @@ func (t *Transport) coldSubmitFunc(messages []s.Message) error {
 			} else if !strings.Contains(err.Error(), "is full") {
 				goto exception
 			}
-			time.Sleep(t.retryTime)
+			runtime.Gosched()
 		}
 		meta.packet = rpc.LogMessage{}
 	}

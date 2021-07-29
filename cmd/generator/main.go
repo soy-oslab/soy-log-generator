@@ -53,6 +53,7 @@ func run(configFilePath string) {
 	}
 exit:
 	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
+	log.Println(err)
 	wg.Done()
 }
 

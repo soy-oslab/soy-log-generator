@@ -99,6 +99,7 @@ func (s *Scheduler) initConfig(configFilepath string) error {
 		err    error
 		b      []byte
 		dupMap map[string]bool
+		fp     *os.File
 	)
 
 	defaults.SetDefaults(&s.config)
@@ -119,6 +120,14 @@ func (s *Scheduler) initConfig(configFilepath string) error {
 	if len(s.config.Files) == 0 || len(s.config.Files) >= 256 {
 		err = errors.New("number of files is over 0 and under 256")
 		goto out
+	}
+
+	for _, fileInfo := range s.config.Files {
+		fp, err = os.Open(fileInfo.Filename)
+		if err != nil {
+			goto out
+		}
+		fp.Close()
 	}
 
 	dupMap = make(map[string]bool)
