@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/pprof"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -70,15 +71,16 @@ func setup(prefix string, configText string) (string, string) {
 	log.SetFlags(log.Lshortfile)
 	testFile, err := os.CreateTemp("", prefix)
 	if err != nil {
-		log.Fatalf("config file creation failed: %v", err)
+		log.Fatalf("config file creation failed => %v", err)
 	}
 	defer testFile.Close()
 	configFile, err := os.OpenFile(testFile.Name(), os.O_WRONLY|os.O_TRUNC|os.O_CREATE, os.FileMode(0644))
 	if err != nil {
-		log.Fatalf("config file open failed: %v", err)
+		log.Fatalf("config file open failed => %v", err)
 	}
 	defer configFile.Close()
 	writer := bufio.NewWriter(configFile)
+	configText = strings.Replace(configText, "\\", "\\\\", -1)
 	writer.WriteString(configText)
 	writer.Flush()
 
@@ -119,7 +121,7 @@ func fileContentsTest(t *testing.T, submit SubmitOperations, testName string, te
 	defer teardown([]string{filename, testFilename})
 	s, err := InitScheduler(filename, submit, nil)
 	if f(s, err) {
-		t.Errorf("%v failed", testName)
+		t.Errorf("%v failed => %v", testName, err)
 	}
 	defer s.Close()
 }
@@ -158,7 +160,7 @@ func TestPatternFiles(t *testing.T) {
 		}
 		return false
 	}
-	filenames, config := getPatternConfig("/tmp/pattern-test.txt*")
+	filenames, config := getPatternConfig(os.TempDir() + string(os.PathSeparator) + "pattern-test.txt*")
 	defer teardown(filenames)
 	fileContentsTest(t, getSubmit(), "pattern-valid-test", config, evalFunc)
 }
@@ -170,7 +172,7 @@ func TestPatternFilesInvalid(t *testing.T) {
 		}
 		return false
 	}
-	filenames, config := getPatternConfig("/tmp/*pattern-test.txt")
+	filenames, config := getPatternConfig(os.TempDir() + string(os.PathSeparator) + "*pattern-test.txt")
 	defer teardown(filenames)
 	fileContentsTest(t, getSubmit(), "pattern-invalid-test", config, evalFunc)
 }
@@ -313,7 +315,7 @@ func TestRun(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	files, _ := filepath.Glob("/tmp/pattern-test.txt*")
+	files, _ := filepath.Glob(os.TempDir() + string(os.PathSeparator) + "pattern-test.txt*")
 	for _, f := range files {
 		os.Remove(f)
 	}

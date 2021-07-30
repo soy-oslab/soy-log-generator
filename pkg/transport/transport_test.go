@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -63,6 +64,7 @@ func setup() (string, string) {
 	defer configFile.Close()
 	configText := fmt.Sprintf(ConfigTest, testFile.Name())
 	writer := bufio.NewWriter(configFile)
+	configText = strings.Replace(configText, "\\", "\\\\", -1)
 	writer.WriteString(configText)
 	writer.Flush()
 	return testFile.Name(), configFile.Name()
