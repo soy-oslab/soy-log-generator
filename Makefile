@@ -7,21 +7,7 @@ GOTEST=$(GOBIN) test
 BENCHTIME=1s
 BENCHTIMEOUT=10m
 
-ifeq ($(OS),Windows_NT)
-	MKDIR=mkdir
-	RM=del
-	RMDIR=rmdir /S /Q
-	RMFLAG=/F /Q
-	SEP=\\
-else
-	MKDIR=mkdir -p
-	RM=rm
-	RMDIR=rmdir
-	RMFLAG=-rf
-	SEP=/
-endif
-
-BUILD_PATH=.$(SEP)build
+BUILD_PATH=./build
 
 all: generator-build
 
@@ -30,75 +16,58 @@ test: compressor-test buffering-test watcher-test \
       classifier-test
 
 clean:
-ifeq ($(OS), Windows_NT)
-	if exist "$(BUILD_PATH)" $(RM) $(RMFLAG) $(BUILD_PATH)$(SEP)*
-	if exist "$(BUILD_PATH)" $(RMDIR) $(BUILD_PATH)
-else
-	$(RM) $(RMFLAG) $(BUILD_PATH)$(SEP)*
-	$(RMDIR) $(BUILD_PATH)
-endif
+	rm $(RMFLAG) $(BUILD_PATH)/*
+	rmdir $(BUILD_PATH)
 
 generator-run:
-	$(GORUN) .$(SEP)cmd$(SEP)generator$(SEP)main.go
+	$(GORUN) ./cmd/generator/main.go
 
 generator-build:
-ifeq ($(OS), Windows_NT)
-	if not exist "$(BUILD_PATH)$(SEP)generator" $(MKDIR) $(BUILD_PATH)$(SEP)generator
-else
-	$(MKDIR) $(BUILD_PATH)$(SEP)generator
-endif
-	$(GOBUILD) -o $(BUILD_PATH)$(SEP)generator .$(SEP)cmd$(SEP)generator$(SEP)main.go
+	mkdir -p $(BUILD_PATH)/generator
+	$(GOBUILD) -o $(BUILD_PATH)/generator ./cmd/generator/main.go
 
 compressor-test:
-	$(GOTEST) -cover -v -coverprofile=coverage.out .$(SEP)pkg$(SEP)compressor
+	$(GOTEST) -cover -v -coverprofile=coverage.out ./pkg/compressor
 	go tool cover -func=coverage.out
-	$(RM) coverage.out
+	rm coverage.out
 
 compressor-bench:
-	$(GOTEST) -bench=. -benchmem -benchtime=$(BENCHTIME) -timeout $(BENCHTIMEOUT) .$(SEP)pkg$(SEP)compressor
+	$(GOTEST) -bench=. -benchmem -benchtime=$(BENCHTIME) -timeout $(BENCHTIMEOUT) ./pkg/compressor
 
 buffering-test:
-	$(GOTEST) -cover -v -coverprofile=coverage.out .$(SEP)pkg$(SEP)buffering
+	$(GOTEST) -cover -v -coverprofile=coverage.out ./pkg/buffering
 	go tool cover -func=coverage.out
-	$(RM) coverage.out
+	rm coverage.out
 
 watcher-test:
-	$(GOTEST) -cover -v -coverprofile=coverage.out .$(SEP)pkg$(SEP)watcher
+	$(GOTEST) -cover -v -coverprofile=coverage.out ./pkg/watcher
 	go tool cover -func=coverage.out
-	$(RM) coverage.out
+	rm coverage.out
 
 scheduler-test:
-	$(GOTEST) -cover -v -coverprofile=coverage.out .$(SEP)pkg$(SEP)scheduler
+	$(GOTEST) -cover -v -coverprofile=coverage.out ./pkg/scheduler
 	go tool cover -func=coverage.out
-	$(RM) coverage.out
+	rm coverage.out
 
 ring-test:
-	$(GOTEST) -cover -v -coverprofile=coverage.out .$(SEP)pkg$(SEP)ring
+	$(GOTEST) -cover -v -coverprofile=coverage.out ./pkg/ring
 	go tool cover -func=coverage.out
-	$(RM) coverage.out
+	rm coverage.out
 
 transport-test:
-	$(GOTEST) -cover -v -coverprofile=coverage.out .$(SEP)pkg$(SEP)transport
+	$(GOTEST) -cover -v -coverprofile=coverage.out ./pkg/transport
 	go tool cover -func=coverage.out
-	$(RM) coverage.out
+	rm coverage.out
 
 classifier-test:
-	$(GOTEST) -cover -v -coverprofile=coverage.out .$(SEP)pkg$(SEP)scheduler
+	$(GOTEST) -cover -v -coverprofile=coverage.out ./pkg/scheduler
 	go tool cover -func=coverage.out
-	$(RM) coverage.out
+	rm coverage.out
 
 codacy-coverage-push:
-ifeq ($(OS),Windows_NT)
-	@echo "Windows_NT doesn't support"
-else
-	$(GOTEST) -coverprofile=coverage.out .$(SEP)...
-	bash scripts$(SEP)get.sh report --force-coverage-parser go -r .$(SEP)coverage.out
-endif
+	$(GOTEST) -coverprofile=coverage.out ./...
+	bash scripts/get.sh report --force-coverage-parser go -r ./coverage.out
 
 .PHONY: gen-src-archive
 gen-src-archive:
-ifeq ($(OS),Windows_NT)
-	@echo "Windows_NT doesn't support"
-else
-	bash scripts$(SEP)gen_src_archive.sh
-endif
+	bash scripts/gen_src_archive.sh
