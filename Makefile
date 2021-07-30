@@ -13,14 +13,12 @@ ifeq ($(OS),Windows_NT)
 	RMDIR=rmdir /S /Q
 	RMFLAG=/F /Q
 	SEP=\\
-	TREE=tree
 else
 	MKDIR=mkdir -p
 	RM=rm
 	RMDIR=rmdir
 	RMFLAG=-rf
 	SEP=/
-	TREE=ls -R
 endif
 
 BUILD_PATH=.$(SEP)build
@@ -44,7 +42,6 @@ generator-run:
 	$(GORUN) .$(SEP)cmd$(SEP)generator$(SEP)main.go
 
 generator-build:
-	$(TREE)
 ifeq ($(OS), Windows_NT)
 	if not exist "$(BUILD_PATH)$(SEP)generator" $(MKDIR) $(BUILD_PATH)$(SEP)generator
 else
