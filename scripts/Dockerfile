@@ -11,8 +11,6 @@ RUN apt-get update && apt-get install -y python3
 
 WORKDIR /go/generator
 
-RUN make
-
-RUN make kube-generator-wrapper.c
+RUN make && make kube-wrapper-build
 
 CMD python3 ./scripts/config-file-generator.py; ./build/kube/wrapper ./build/generator/main
