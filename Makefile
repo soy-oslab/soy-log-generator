@@ -1,3 +1,5 @@
+CC=gcc
+
 GOBIN=go
 GORUN=$(GOBIN) run
 GOBUILD=$(GOBIN) build
@@ -25,6 +27,10 @@ generator-run:
 generator-build:
 	mkdir -p $(BUILD_PATH)/generator
 	$(GOBUILD) -o $(BUILD_PATH)/generator ./cmd/generator/main.go
+
+kube-wrapper-build:
+	mkdir -p $(BUILD_PATH)/kube
+	$(CC) -Wall -Werror -o $(BUILD_PATH)/kube/wrapper ./tools/kube-generator-wrapper/kube-generator-wrapper.c
 
 compressor-test:
 	$(GOTEST) -cover -v -coverprofile=coverage.out ./pkg/compressor

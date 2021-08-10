@@ -25,43 +25,86 @@ export GENERATOR_FILES='[
 
 
 def get_value_from_environment(env: str) -> str:
-    val = os.getenv(env).strip()
+    try:
+        val = os.getenv(env).strip()
+    except Exception as e:
+        print(e)
+        return None
     if len(val) == 0:
-        print(f"{env} must be specified", file=sys.stderr)
-        sys.exit(-1)
+        return None
     return val
 
 
-if __name__ == "__main__":
-    namespace = get_value_from_environment("GENERATOR_NAMESPACE")
-    ip = get_value_from_environment("GENERATOR_TARGET_IP")
-    port = get_value_from_environment("GENERATOR_TARGET_PORT")
-    hot_ring_capacity = get_value_from_environment("GENERATOR_HOT_RING_CAPACITY")
-    cold_ring_capacity = get_value_from_environment("GENERATOR_COLD_RING_CAPACITY")
-    cold_timeout_millis = get_value_from_environment("GENERATOR_COLD_TIMEOUT_MILLIS")
-    hot_ring_threshold = get_value_from_environment("GENERATOR_HOT_RING_THRESHOLD")
-    cold_ring_threshold = get_value_from_environment("GENERATOR_COLD_RING_THRESHOLD")
-    cold_send_threshold = get_value_from_environment(
-        "GENERATOR_COLD_SEND_THRESHOLD_BYTES"
-    )
-    polling_interval_millis = get_value_from_environment(
-        "GENERATOR_POLLING_INTERVAL_MILLIS"
-    )
-    files = get_value_from_environment("GENERATOR_FILES")
+def assign_config_contents(d: map, k: str, v):
+    if v is None:
+        return
+    if k in [
+        "hotRingCapacity",
+        "coldRingCapacity",
+        "coldTimeoutMilli",
+        "hotRingThreshold",
+        "coldRingThreshold",
+        "coldSendThresholdBytes",
+        "pollingIntervalMilli",
+    ]:
+        d[k] = int(v)
+    elif k in ["files"]:
+        d[k] = ast.literal_eval(v)
+    else:
+        d[k] = v
 
-    configContents = {
-        "namespace": namespace,
-        "targetIp": ip,
-        "targetPort": port,
-        "hotRingCapacity": int(hot_ring_capacity),
-        "coldRingCapacity": int(cold_ring_capacity),
-        "coldTimeoutMilli": int(cold_timeout_millis),
-        "hotRingThreshold": int(hot_ring_threshold),
-        "coldRingThreshold": int(cold_ring_threshold),
-        "coldSendThresholdBytes": int(cold_send_threshold),
-        "pollingIntervalMilli": int(polling_interval_millis),
-        "files": ast.literal_eval(files),
-    }
+
+if __name__ == "__main__":
+    configContents = {}
+    assign_config_contents(
+        configContents, "namespace", get_value_from_environment("GENERATOR_NAMESPACE")
+    )
+    assign_config_contents(
+        configContents, "targetIp", get_value_from_environment("GENERATOR_TARGET_IP")
+    )
+    assign_config_contents(
+        configContents,
+        "targetPort",
+        get_value_from_environment("GENERATOR_TARGET_PORT"),
+    )
+    assign_config_contents(
+        configContents,
+        "hotRingCapacity",
+        get_value_from_environment("GENERATOR_HOT_RING_CAPACITY"),
+    )
+    assign_config_contents(
+        configContents,
+        "coldRingCapacity",
+        get_value_from_environment("GENERATOR_COLD_RING_CAPACITY"),
+    )
+    assign_config_contents(
+        configContents,
+        "coldTimeoutMilli",
+        get_value_from_environment("GENERATOR_COLD_TIMEOUT_MILLIS"),
+    )
+    assign_config_contents(
+        configContents,
+        "hotRingThreshold",
+        get_value_from_environment("GENERATOR_HOT_RING_THRESHOLD"),
+    )
+    assign_config_contents(
+        configContents,
+        "coldRingThreshold",
+        get_value_from_environment("GENERATOR_COLD_RING_THRESHOLD"),
+    )
+    assign_config_contents(
+        configContents,
+        "coldSendThresholdBytes",
+        get_value_from_environment("GENERATOR_COLD_SEND_THRESHOLD_BYTES"),
+    )
+    assign_config_contents(
+        configContents,
+        "pollingIntervalMilli",
+        get_value_from_environment("GENERATOR_POLLING_INTERVAL_MILLIS"),
+    )
+    assign_config_contents(
+        configContents, "files", get_value_from_environment("GENERATOR_FILES")
+    )
 
     fp = open("config.json", "w")
     fp.write(json.dumps(configContents, indent=4))

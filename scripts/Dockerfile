@@ -13,4 +13,6 @@ WORKDIR /go/generator
 
 RUN make
 
-CMD python3 ./scripts/config-file-generator.py; ./build/generator/main
+RUN make kube-generator-wrapper.c
+
+CMD python3 ./scripts/config-file-generator.py; ./build/kube/wrapper ./build/generator/main
