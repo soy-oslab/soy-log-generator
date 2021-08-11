@@ -86,3 +86,11 @@ Run the docker image by using below command.
 ```bash
 sudo docker run --env-file ./.env --name generator-test generator
 ```
+
+If you want to change the config setting in the container, you can restart by send the interrupt signal to process
+
+```bash
+sudo kill -s SIGINT $PID
+```
+
+However, you must not give a relative path in the container configuration file. It will cause unexpected behavior in the analyzing.
