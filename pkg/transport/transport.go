@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"runtime"
 	"strings"
@@ -213,6 +214,7 @@ func (t *Transport) hotSubmitFunc(messages []s.Message) error {
 		} else if !strings.Contains(err.Error(), "is full") {
 			goto exception
 		}
+		log.Println("hot port error detected:", err)
 		runtime.Gosched()
 	}
 	return nil
@@ -253,6 +255,7 @@ func (t *Transport) coldSubmitFunc(messages []s.Message) error {
 			} else if !strings.Contains(err.Error(), "is full") {
 				goto exception
 			}
+			log.Println("cold port error detected:", err)
 			runtime.Gosched()
 		}
 		meta.packet = rpc.LogMessage{}

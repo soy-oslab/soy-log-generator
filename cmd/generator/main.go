@@ -79,7 +79,7 @@ func main() {
 	defer fp.Close()
 	multiWriter := io.MultiWriter(fp, os.Stdout)
 	log.SetOutput(multiWriter)
-	log.SetFlags(log.Lshortfile)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	mutex = new(sync.Mutex)
 
