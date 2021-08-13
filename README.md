@@ -19,7 +19,7 @@ rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.7.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 ```
 
-Build this program by using below commands.
+Build this program by using the below commands.
 
 ```bash
 git clone --recurse-submodules https://github.com/soyoslab/soy_log_generator.git
@@ -62,10 +62,14 @@ sudo make generator-run
 You can build the docker image.
 
 ```bash
+sudo pip install git-archive-all
+sudo make gen-src-archive
+sudo mkdir -p /tmp/dockerize/generator
+sudo tar xvzf build/generator.src.tar.gz --strip 1 -C /tmp/dockerize/generator
 sudo docker build -t generator:latest -f scripts/Dockerfile /tmp/dockerize
 ```
 
-Now you need the docker environment file which named `.env` in your local host machine. Its contents is like below.
+Now you need the docker environment file named `.env` in your localhost machine. Its contents are like below.
 
 ```
 GENERATOR_NAMESPACE=test-server
@@ -81,16 +85,16 @@ GENERATOR_POLLING_INTERVAL_MILLIS=1000
 GENERATOR_FILES=[{"filename":"/var/log/*log","hotFilter":["error","failed","critical"]},]
 ```
 
-Run the docker image by using below command.
+Run the docker image by using the below command.
 
 ```bash
 sudo docker run --env-file ./.env --name generator-test generator
 ```
 
-If you want to change the config setting in the container, you can restart by send the interrupt signal to process
+If you want to change the config setting in the container, you can restart by sending the interrupt signal to process
 
 ```bash
 sudo kill -s SIGINT $PID
 ```
 
-However, you must not give a relative path in the container configuration file. It will cause unexpected behavior in the analyzing.
+However, you must not give a relative path in the container configuration file. It will cause unexpected behavior in the analysis.
