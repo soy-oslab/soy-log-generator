@@ -35,11 +35,11 @@ Set the valid environment variables.
 export GENERATOR_NAMESPACE=test-server
 export GENERATOR_TARGET_IP=${LOG_COLLCETOR_IP}
 export GENERATOR_TARGET_PORT=${LOG_COLLCETOR_PORT}
-export GENERATOR_HOT_RING_CAPACITY=8
+export GENERATOR_HOT_RING_CAPACITY=8 # Max lines ring can contain
 export GENERATOR_COLD_RING_CAPACITY=32
-export GENERATOR_HOT_RING_THRESHOLD=2
+export GENERATOR_HOT_RING_THRESHOLD=2 # Max lines from ring to extract
 export GENERATOR_COLD_RING_THRESHOLD=2
-export GENERATOR_COLD_TIMEOUT_MILLIS=3000
+export GENERATOR_COLD_TIMEOUT_MILLIS=3000 # Maximum time to be able to exist in ring
 export GENERATOR_COLD_SEND_THRESHOLD_BYTES=4096
 export GENERATOR_POLLING_INTERVAL_MILLIS=1000
 export GENERATOR_FILES='[{"filename":"/var/log/*log","hotFilter":["error","failed","critical"]},]'
@@ -48,7 +48,7 @@ export GENERATOR_FILES='[{"filename":"/var/log/*log","hotFilter":["error","faile
 Generate the configuration file by using the configuration generator script.
 
 ```bash
-sudo python3 ./scripts/config-file-generator.py
+python3 ./scripts/config-file-generator.py
 ```
 
 Now you can run the program.
@@ -71,7 +71,7 @@ sudo docker build -t generator:latest -f scripts/Dockerfile /tmp/dockerize
 
 Now you need the docker environment file named `.env` in your localhost machine. Its contents are like below.
 
-```
+```bash
 GENERATOR_NAMESPACE=test-server
 GENERATOR_TARGET_IP=${LOG_COLLCETOR_IP}
 GENERATOR_TARGET_PORT=${LOG_COLLCETOR_PORT}
