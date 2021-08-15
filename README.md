@@ -51,10 +51,40 @@ Generate the configuration file by using the configuration generator script.
 python3 ./scripts/config-file-generator.py
 ```
 
-Now you can run the program.
+Now, the `config.json` file is generated and you can run the program.
 
 ```bash
 sudo make generator-run
+```
+
+If you want to modify the configuration, you open the `config.json` file and
+fix the parameter. Each parameter meaning is described below. In other words,
+you only create the `config.json` file to the working directory is ok without
+using the auto-configuration generator.
+
+```json
+{
+    "namespace": $GENERATOR_NAMESPACE,
+    "targetIp": $GENERATOR_TARGET_IP,
+    "targetPort": $GENERATOR_TARGET_PORT,
+    "hotRingCapacity": $GENERATOR_HOT_RING_CAPACITY,
+    "coldRingCapacity": $GENERATOR_COLD_RING_CAPACITY,
+    "coldTimeoutMilli": $GENERATOR_POLLING_INTERVAL_MILLIS,
+    "hotRingThreshold": $GENERATOR_HOT_RING_THRESHOLD,
+    "coldRingThreshold": $GENERATOR_COLD_RING_THRESHOLD,
+    "coldSendThresholdBytes": $GENERATOR_COLD_SEND_THRESHOLD_BYTES,
+    "pollingIntervalMilli": $GENERATOR_POLLING_INTERVAL_MILLIS,
+    "files": [
+        {
+            "filename": "/var/log/*log",
+            "hotFilter": [
+                "error",
+                "failed",
+                "critical"
+            ]
+        }
+    ]
+}
 ```
 
 # Docker
